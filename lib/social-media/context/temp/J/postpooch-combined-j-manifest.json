@@ -1,0 +1,26 @@
+{
+  "experiment": "J",
+  "purpose": "Full-system held-out A/B test; no production changes",
+  "sourceSha256": {
+    "classification-policy.ts": "75d669d23e2dba187ea67142a3992780a379e59e1fb24d69a2849c3312b9a4c5",
+    "identity-jev-candidate-e.ts": "6146c703c8d04f1a4640290810f0fe76a4db510cde410551eb871303be1d4f14",
+    "preference-jev-candidate-i.ts": "a60baef1a5a087fe289402056940169b9dccddcfd74294cd9676b3897b988b1c",
+    "temporary-jev-candidate-h.ts": "3a1443120ff977153f380b38fd707a4298cd8ce506455a56f52b8740f1cfb9a3"
+  },
+  "components": {
+    "Identity E": "identity-jev-candidate-e.ts",
+    "Preference I": "preference-jev-candidate-i.ts",
+    "Frequency V7": "classification-policy.ts",
+    "Temporary H": "temporary-jev-candidate-h.ts",
+    "Temporary Type V7": "classification-policy.ts",
+    "Router V7": "classification-policy.ts"
+  },
+  "model": "jev-latest",
+  "thresholds": {
+    "include": 0.75,
+    "exclude": 0.25,
+    "temporaryType": 0.7
+  },
+  "router": "verbatim V7",
+  "identityAggregation": "verbatim max of nine Candidate E scores"
+}

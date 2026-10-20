@@ -1,0 +1,37 @@
+{
+  "experiment": "K",
+  "baseline": "Combined J (Candidate E Identity / Candidate I Preference / Version 7 Frequency / Candidate H Temporary / Version 7 Temporary Type)",
+  "candidate": "same 13-question map, replacing ONLY Preference with Candidate K",
+  "cohorts": {
+    "fresh": 42,
+    "diagnostic_replay": 8
+  },
+  "requests": {
+    "baseline": 50,
+    "candidate": 50,
+    "total": 100,
+    "retries": 0
+  },
+  "model": "jev-latest",
+  "thresholds": {
+    "include": 0.75,
+    "exclude": 0.25,
+    "temporaryType": 0.7
+  },
+  "identity_aggregation": "max of same nine E field answers",
+  "file_sha256": {
+    "postpooch-combined-classifier-j.ts": "e10d8e72a2c40625318dcfc24584f5923b90725817f71dd3f042513fe7ba5ad0",
+    "preference-jev-candidate-k.ts": "6613bb38cd0d7a41950dcb0273e2c2b1ca9f78de171f33da1fd90a75f400e913",
+    "preference-temporary-scope-holdout-k.ts": "8e433621a4a142e0e80140d854a89188539c982d72fe9fad142fd1331b20370b",
+    "postpooch-preference-k-codex-evaluation.md": "75ff7f2d0eee3f7e5b4a7b5dbc2482ff047c3171c080698d0b3b7d7cf2103fa9"
+  },
+  "source_integrity": {
+    "combined_j_sha256": "e10d8e72a2c40625318dcfc24584f5923b90725817f71dd3f042513fe7ba5ad0"
+  },
+  "rules": [
+    "Do not modify production or prompts during evaluation.",
+    "Fuzzy counts few/handful/couple are valid counter.",
+    "Replays cannot count as fresh.",
+    "Only Preference question changes."
+  ]
+}

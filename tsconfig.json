@@ -1,0 +1,49 @@
+{
+  "compilerOptions": {
+    "target": "ES2017",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": ["./*"]
+    }
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts",
+    "**/*.mts",
+    "trigger.config.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "editor/**/__tests__",
+    "aws/newsletter",
+    "elena-hart-real-estate",
+    "estate-agent-site",
+    "harbor-house-realty",
+    "luxury-agent-site",
+    "luxury-realtor-template",
+    "mara-voss-real-estate",
+    "mila-wonen",
+    "rowan-estates-inspired",
+    "vale-estate",
+    "vale-estates"
+  ]
+}

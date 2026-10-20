@@ -1,0 +1,37 @@
+{
+  "name": "newsletter",
+  "version": "0.1.0",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "test": "jest",
+    "test:integration": "jest recipient-preparation.integration.test.ts --runInBand",
+    "cdk": "cdk"
+  },
+  "devDependencies": {
+    "@swc/core": "^1.15.0",
+    "@swc/jest": "^0.2.39",
+    "@types/aws-lambda": "^8.10.161",
+    "@types/jest": "^30",
+    "@types/mjml": "^4.7.4",
+    "@types/node": "^24.10.1",
+    "@types/pg": "^8.20.0",
+    "aws-cdk": "2.1145.0",
+    "jest": "^30",
+    "tsx": "^4.23.0",
+    "typescript": "~7.0.2"
+  },
+  "dependencies": {
+    "@aws-sdk/client-route-53": "^3.1152.0",
+    "@aws-sdk/client-secrets-manager": "^3.1097.0",
+    "@aws-sdk/client-sesv2": "^3.1152.0",
+    "@aws-sdk/client-sqs": "^3.1097.0",
+    "@templatical/renderer": "^0.32.0",
+    "@templatical/types": "^0.32.0",
+    "aws-cdk-lib": "^2.272.0",
+    "constructs": "^10.5.0",
+    "mjml": "^5.4.0",
+    "pg": "^8.22.0",
+    "zod": "^4.4.3"
+  }
+}

@@ -1,0 +1,88 @@
+import { z } from "zod";
+
+export const MaraHomeContentSchema = z.object({
+  heroImage: z.string(),
+  heroEyebrow: z.string(),
+  heroTitleLine1: z.string(),
+  heroTitleLine2Before: z.string(),
+  heroTitleEmphasis: z.string(),
+  heroSubtext: z.string(),
+  heroCtaPrimary: z.string(),
+  heroCtaSecondary: z.string(),
+  heroSideNoteNumber: z.string(),
+  heroSideNote: z.string(),
+  manifestoEyebrow: z.string(),
+  manifestoTitleLine1: z.string(),
+  manifestoTitleLine2: z.string(),
+  manifestoBody: z.string(),
+  manifestoCta: z.string(),
+  featuredEyebrow: z.string(),
+  featuredTitle: z.string(),
+  featuredCta: z.string(),
+  darkStoryImage: z.string(),
+  darkStoryEyebrow: z.string(),
+  darkStoryTitleLine1: z.string(),
+  darkStoryTitleEmphasis: z.string(),
+  darkStoryTitleAfter: z.string(),
+  darkStoryBody: z.string(),
+  neighborhoodEyebrow: z.string(),
+  neighborhoodTitle: z.string(),
+  neighborhoodCta: z.string(),
+  testimonialEyebrow: z.string(),
+  testimonialCta: z.string(),
+  journalEyebrow: z.string(),
+  journalTitle: z.string(),
+  journalCta: z.string(),
+  closingImage: z.string(),
+  closingEyebrow: z.string(),
+  closingTitle: z.string(),
+  closingCta: z.string(),
+});
+
+export type MaraHomeContent = z.infer<typeof MaraHomeContentSchema>;
+
+export const maraHomeDefaultContent: MaraHomeContent = {
+  heroImage:
+    "https://pub-7c19c2bd664343ff99e9f2c4903fb73f.r2.dev/websites/template-defaults/79/79a3e583ea729240ed5fcb3efb438ecf750a3a78497f3956a44d0fa649621e2b.avif",
+  heroEyebrow: "Toronto · Private residential advisory",
+  heroTitleLine1: "Move toward a home",
+  heroTitleLine2Before: "that feels like ",
+  heroTitleEmphasis: "you.",
+  heroSubtext:
+    "Exceptional properties, architectural perspective, and highly personal representation for buyers and sellers.",
+  heroCtaPrimary: "View properties",
+  heroCtaSecondary: "Work with Mara",
+  heroSideNoteNumber: "01",
+  heroSideNote: "Independent advice\nfor considered moves.",
+  manifestoEyebrow: "A different measure of luxury",
+  manifestoTitleLine1: "Luxury is not a price point.",
+  manifestoTitleLine2:
+    "It is the feeling that your home fits your life exceptionally well.",
+  manifestoBody:
+    "I represent clients who care about architecture, neighbourhood, privacy, craft and the long view. Every move begins with understanding what matters to you—then making the market easier to read.",
+  manifestoCta: "Meet Mara",
+  featuredEyebrow: "Selected properties",
+  featuredTitle: "Homes with a point of view.",
+  featuredCta: "View all properties",
+  darkStoryImage:
+    "https://pub-7c19c2bd664343ff99e9f2c4903fb73f.r2.dev/websites/template-defaults/37/374ad529872a02f0232148ef0383c1c1e3d47e99c33aa7d4e014d2f7aab206d2.avif",
+  darkStoryEyebrow: "Private client representation",
+  darkStoryTitleLine1: "Market knowledge is useful.",
+  darkStoryTitleEmphasis: "Judgment",
+  darkStoryTitleAfter: " is better.",
+  darkStoryBody:
+    "My role is part strategist, part editor, part negotiator. I help you separate lasting value from surface appeal, see potential clearly, and move with confidence when the right opportunity appears.",
+  neighborhoodEyebrow: "Neighbourhood notes",
+  neighborhoodTitle: "Find your part of the city.",
+  neighborhoodCta: "Explore Toronto",
+  testimonialEyebrow: "Client perspective",
+  testimonialCta: "Read client stories",
+  journalEyebrow: "Field notes",
+  journalTitle: "Real estate, design & the city.",
+  journalCta: "Visit the journal",
+  closingImage:
+    "https://pub-7c19c2bd664343ff99e9f2c4903fb73f.r2.dev/websites/template-defaults/bc/bc5c15db86f2b08da8df6ecd92f33e9d7a08fa13b3daaae3d38760b72c12e55d.avif",
+  closingEyebrow: "Your next move",
+  closingTitle: "There is no substitute for a good conversation.",
+  closingCta: "Let’s talk",
+};

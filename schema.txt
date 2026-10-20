@@ -1,0 +1,2389 @@
+CREATE SCHEMA IF NOT EXISTS public;
+
+CREATE TABLE public.blog_posts (
+  id uuid DEFAULT gen_random_uuid() NOT NULL,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  text text,
+  website_id uuid,
+  title text,
+  subtitle text,
+  CONSTRAINT blog_posts_pkey PRIMARY KEY (id),
+  CONSTRAINT blog_posts_website_id_fkey FOREIGN KEY (website_id) REFERENCES websites(id) ON UPDATE CASCADE ON DELETE CASCADE
+);
+
+CREATE TABLE public.crm_activities (
+  id uuid DEFAULT gen_random_uuid() NOT NULL,
+  profile_id uuid NOT NULL,
+  contact_id uuid,
+  property_id uuid,
+  transaction_id uuid,
+  task_id uuid,
+  activity_type text NOT NULL,
+  summary text NOT NULL,
+  metadata jsonb DEFAULT '{}'::jsonb NOT NULL,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  CONSTRAINT crm_activities_activity_type_check CHECK (activity_type = ANY (ARRAY['contact_created'::text, 'contact_updated'::text, 'property_created'::text, 'property_updated'::text, 'transaction_created'::text, 'transaction_updated'::text, 'stage_changed'::text, 'task_created'::text, 'task_completed'::text, 'note_added'::text])),
+  CONSTRAINT crm_activities_contact_id_profile_id_fkey FOREIGN KEY (contact_id, profile_id) REFERENCES crm_contacts(id, profile_id) ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT crm_activities_id_profile_id_key UNIQUE (id, profile_id),
+  CONSTRAINT crm_activities_metadata_check CHECK (jsonb_typeof(metadata) = 'object'::text),
+  CONSTRAINT crm_activities_pkey PRIMARY KEY (id),
+  CONSTRAINT crm_activities_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES profiles(id) ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT crm_activities_property_id_profile_id_fkey FOREIGN KEY (property_id, profile_id) REFERENCES crm_properties(id, profile_id) ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT crm_activities_task_id_profile_id_fkey FOREIGN KEY (task_id, profile_id) REFERENCES crm_tasks(id, profile_id) ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT crm_activities_transaction_id_profile_id_fkey FOREIGN KEY (transaction_id, profile_id) REFERENCES crm_transactions(id, profile_id) ON UPDATE CASCADE ON DELETE CASCADE
+);
+
+CREATE TABLE public.crm_contact_stages (
+  id uuid DEFAULT gen_random_uuid() NOT NULL,
+  profile_id uuid,
+  name text NOT NULL,
+  color text DEFAULT '#256f68'::text NOT NULL,
+  "position" smallint DEFAULT 0 NOT NULL,
+  is_closed boolean DEFAULT false NOT NULL,
+  is_won boolean DEFAULT false NOT NULL,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  updated_at timestamp with time zone DEFAULT now() NOT NULL,
+  CONSTRAINT crm_pipeline_stages_check CHECK (NOT is_won OR is_closed),
+  CONSTRAINT crm_pipeline_stages_pkey PRIMARY KEY (id),
+  CONSTRAINT crm_pipeline_stages_position_check CHECK ("position" >= 0),
+  CONSTRAINT crm_pipeline_stages_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES profiles(id) ON UPDATE CASCADE ON DELETE CASCADE
+);
+
+CREATE TABLE public.crm_contact_tags (
+  profile_id uuid NOT NULL,
+  contact_id uuid NOT NULL,
+  tag_id uuid NOT NULL,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  CONSTRAINT crm_contact_tags_contact_id_profile_id_fkey FOREIGN KEY (contact_id, profile_id) REFERENCES crm_contacts(id, profile_id) ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT crm_contact_tags_pkey PRIMARY KEY (profile_id, contact_id, tag_id),
+  CONSTRAINT crm_contact_tags_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES profiles(id) ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT crm_contact_tags_tag_id_profile_id_fkey FOREIGN KEY (tag_id, profile_id) REFERENCES crm_tags(id, profile_id) ON UPDATE CASCADE ON DELETE CASCADE
+);
+
+CREATE TABLE public.crm_contacts (
+  id uuid DEFAULT gen_random_uuid() NOT NULL,
+  profile_id uuid NOT NULL,
+  first_name text NOT NULL,
+  last_name text DEFAULT ''::text NOT NULL,
+  email text,
+  phone text,
+  contact_types text[] DEFAULT '{}'::text[] NOT NULL,
+  lead_status text DEFAULT 'new'::text NOT NULL,
+  lead_source text,
+  priority text DEFAULT 'warm'::text NOT NULL,
+  price_min numeric(14,2),
+  price_max numeric(14,2),
+  preferred_locations text[] DEFAULT '{}'::text[] NOT NULL,
+  preapproved boolean DEFAULT false NOT NULL,
+  last_contacted_at timestamp with time zone,
+  next_follow_up_at timestamp with time zone,
+  notes text,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  updated_at timestamp with time zone DEFAULT now() NOT NULL,
+  stage_id uuid,
+  email_marketing_status text DEFAULT 'unknown'::text NOT NULL,
+  email_marketing_status_changed_at timestamp with time zone,
+  CONSTRAINT crm_contacts_check CHECK (price_min IS NULL OR price_max IS NULL OR price_max >= price_min),
+  CONSTRAINT crm_contacts_contact_types_check CHECK (cardinality(contact_types) <= 8),
+  CONSTRAINT crm_contacts_email_marketing_status_check CHECK (email_marketing_status = ANY (ARRAY['unknown'::text, 'subscribed'::text, 'unsubscribed'::text, 'suppressed'::text, 'invalid'::text])) NOT VALID,
+  CONSTRAINT crm_contacts_id_profile_id_key UNIQUE (id, profile_id),
+  CONSTRAINT crm_contacts_lead_status_check CHECK (lead_status = ANY (ARRAY['new'::text, 'contacted'::text, 'qualified'::text, 'nurturing'::text, 'active_client'::text, 'past_client'::text, 'inactive'::text])),
+  CONSTRAINT crm_contacts_pkey PRIMARY KEY (id),
+  CONSTRAINT crm_contacts_preferred_locations_check CHECK (cardinality(preferred_locations) <= 20),
+  CONSTRAINT crm_contacts_price_max_check CHECK (price_max IS NULL OR price_max >= 0::numeric),
+  CONSTRAINT crm_contacts_price_min_check CHECK (price_min IS NULL OR price_min >= 0::numeric),
+  CONSTRAINT crm_contacts_priority_check CHECK (priority = ANY (ARRAY['hot'::text, 'warm'::text, 'cold'::text])),
+  CONSTRAINT crm_contacts_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES profiles(id) ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT crm_contacts_stage_id_fkey FOREIGN KEY (stage_id) REFERENCES crm_contact_stages(id) ON UPDATE CASCADE ON DELETE SET NULL
+);
+
+CREATE TABLE public.crm_contacts_relationships (
+  id uuid DEFAULT gen_random_uuid() NOT NULL,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  relationship_type text,
+  person_1_id uuid NOT NULL,
+  person_2_id uuid NOT NULL,
+  crm_contacts_relationship_type_id uuid NOT NULL,
+  CONSTRAINT crm_contacts_relationships_crm_contacts_relationship_type__fkey FOREIGN KEY (crm_contacts_relationship_type_id) REFERENCES crm_contacts_relationships_types(id) ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT crm_contacts_relationships_distinct_people CHECK (person_1_id <> person_2_id),
+  CONSTRAINT crm_contacts_relationships_person_1_id_fkey FOREIGN KEY (person_1_id) REFERENCES crm_contacts(id) ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT crm_contacts_relationships_person_2_id_fkey FOREIGN KEY (person_2_id) REFERENCES crm_contacts(id) ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT crm_contacts_relationships_pkey PRIMARY KEY (id)
+);
+
+CREATE TABLE public.crm_contacts_relationships_types (
+  id uuid DEFAULT gen_random_uuid() NOT NULL,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  profile_id uuid,
+  type_1 text NOT NULL,
+  type_2 text,
+  CONSTRAINT crm_contacts_relationship_types_pkey PRIMARY KEY (id),
+  CONSTRAINT crm_contacts_relationship_types_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES profiles(id) ON UPDATE CASCADE ON DELETE CASCADE
+);
+
+CREATE TABLE public.crm_deal_and_contact_connections (
+  id bigint GENERATED BY DEFAULT AS IDENTITY NOT NULL,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  crm_deal_id uuid NOT NULL,
+  crm_contact_id uuid NOT NULL,
+  CONSTRAINT crm_deal_and_contact_connections_crm_contact_id_fkey FOREIGN KEY (crm_contact_id) REFERENCES crm_contacts(id) ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT crm_deal_and_contact_connections_crm_deal_id_fkey FOREIGN KEY (crm_deal_id) REFERENCES crm_deals(id) ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT crm_deal_and_contact_connections_pkey PRIMARY KEY (id)
+);
+
+CREATE TABLE public.crm_deal_and_partners_connections (
+  id uuid DEFAULT gen_random_uuid() NOT NULL,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  crm_deal_id uuid NOT NULL,
+  crm_partner_id uuid NOT NULL,
+  CONSTRAINT crm_deal_and_partners_connections_crm_deal_id_fkey FOREIGN KEY (crm_deal_id) REFERENCES crm_deals(id) ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT crm_deal_and_partners_connections_crm_partner_id_fkey FOREIGN KEY (crm_partner_id) REFERENCES crm_partners(id) ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT crm_deal_and_partners_connections_pkey PRIMARY KEY (id)
+);
+
+CREATE TABLE public.crm_deal_stages (
+  id uuid DEFAULT gen_random_uuid() NOT NULL,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  profile_id uuid NOT NULL,
+  name text NOT NULL,
+  client_type client_type NOT NULL,
+  color text DEFAULT '#256f68'::text NOT NULL,
+  "position" smallint DEFAULT 0 NOT NULL,
+  updated_at timestamp with time zone DEFAULT now() NOT NULL,
+  CONSTRAINT crm_deal_stages_pkey PRIMARY KEY (id),
+  CONSTRAINT crm_deal_stages_position_check CHECK ("position" >= 0),
+  CONSTRAINT crm_deal_stages_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES profiles(id) ON UPDATE CASCADE ON DELETE CASCADE
+);
+
+CREATE TABLE public.crm_deals (
+  id uuid DEFAULT gen_random_uuid() NOT NULL,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  profile_id uuid NOT NULL,
+  price bigint,
+  close_date date,
+  earnest_money_due date,
+  mutual_acceptance date,
+  due_diligence date,
+  final_walk_through date,
+  possession date,
+  commission numeric,
+  property_address text,
+  description text,
+  client_type client_type NOT NULL,
+  crm_deal_stage_id uuid,
+  name text NOT NULL,
+  "position" integer DEFAULT 0 NOT NULL,
+  updated_at timestamp with time zone DEFAULT now() NOT NULL,
+  CONSTRAINT crm_deals_crm_deal_stage_id_fkey FOREIGN KEY (crm_deal_stage_id) REFERENCES crm_deal_stages(id) ON UPDATE CASCADE ON DELETE RESTRICT,
+  CONSTRAINT crm_deals_pkey PRIMARY KEY (id),
+  CONSTRAINT crm_deals_position_check CHECK ("position" >= 0),
+  CONSTRAINT crm_deals_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES profiles(id) ON UPDATE CASCADE ON DELETE CASCADE
+);
+
+CREATE TABLE public.crm_notes (
+  id uuid DEFAULT gen_random_uuid() NOT NULL,
+  profile_id uuid NOT NULL,
+  contact_id uuid,
+  property_id uuid,
+  transaction_id uuid,
+  body text NOT NULL,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  updated_at timestamp with time zone DEFAULT now() NOT NULL,
+  CONSTRAINT crm_notes_check CHECK (contact_id IS NOT NULL OR property_id IS NOT NULL OR transaction_id IS NOT NULL),
+  CONSTRAINT crm_notes_contact_id_profile_id_fkey FOREIGN KEY (contact_id, profile_id) REFERENCES crm_contacts(id, profile_id) ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT crm_notes_id_profile_id_key UNIQUE (id, profile_id),
+  CONSTRAINT crm_notes_pkey PRIMARY KEY (id),
+  CONSTRAINT crm_notes_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES profiles(id) ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT crm_notes_property_id_profile_id_fkey FOREIGN KEY (property_id, profile_id) REFERENCES crm_properties(id, profile_id) ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT crm_notes_transaction_id_profile_id_fkey FOREIGN KEY (transaction_id, profile_id) REFERENCES crm_transactions(id, profile_id) ON UPDATE CASCADE ON DELETE CASCADE
+);
+
+CREATE TABLE public.crm_partners (
+  id uuid DEFAULT gen_random_uuid() NOT NULL,
+  profile_id uuid NOT NULL,
+  name text NOT NULL,
+  partner_type text DEFAULT 'vendor'::text NOT NULL,
+  contact_name text,
+  email text,
+  phone text,
+  website text,
+  notes text,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  updated_at timestamp with time zone DEFAULT now() NOT NULL,
+  CONSTRAINT crm_partners_id_profile_id_key UNIQUE (id, profile_id),
+  CONSTRAINT crm_partners_partner_type_check CHECK (partner_type = ANY (ARRAY['brokerage'::text, 'lender'::text, 'title'::text, 'inspector'::text, 'contractor'::text, 'photographer'::text, 'attorney'::text, 'vendor'::text, 'other'::text])),
+  CONSTRAINT crm_partners_pkey PRIMARY KEY (id),
+  CONSTRAINT crm_partners_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES profiles(id) ON UPDATE CASCADE ON DELETE CASCADE
+);
+
+CREATE TABLE public.crm_properties (
+  id uuid DEFAULT gen_random_uuid() NOT NULL,
+  profile_id uuid NOT NULL,
+  address_line1 text NOT NULL,
+  address_line2 text,
+  city text NOT NULL,
+  state text NOT NULL,
+  postal_code text NOT NULL,
+  country text DEFAULT 'US'::text NOT NULL,
+  property_type text DEFAULT 'single_family'::text NOT NULL,
+  listing_status text DEFAULT 'prospect'::text NOT NULL,
+  mls_number text,
+  listing_price numeric(14,2),
+  bedrooms numeric(5,1),
+  bathrooms numeric(5,1),
+  square_feet integer,
+  notes text,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  updated_at timestamp with time zone DEFAULT now() NOT NULL,
+  CONSTRAINT crm_properties_bathrooms_check CHECK (bathrooms IS NULL OR bathrooms >= 0::numeric),
+  CONSTRAINT crm_properties_bedrooms_check CHECK (bedrooms IS NULL OR bedrooms >= 0::numeric),
+  CONSTRAINT crm_properties_id_profile_id_key UNIQUE (id, profile_id),
+  CONSTRAINT crm_properties_listing_price_check CHECK (listing_price IS NULL OR listing_price >= 0::numeric),
+  CONSTRAINT crm_properties_listing_status_check CHECK (listing_status = ANY (ARRAY['prospect'::text, 'coming_soon'::text, 'active'::text, 'pending'::text, 'sold'::text, 'leased'::text, 'off_market'::text])),
+  CONSTRAINT crm_properties_pkey PRIMARY KEY (id),
+  CONSTRAINT crm_properties_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES profiles(id) ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT crm_properties_profile_id_mls_number_key UNIQUE (profile_id, mls_number),
+  CONSTRAINT crm_properties_property_type_check CHECK (property_type = ANY (ARRAY['single_family'::text, 'condo'::text, 'townhome'::text, 'multi_family'::text, 'land'::text, 'commercial'::text, 'other'::text])),
+  CONSTRAINT crm_properties_square_feet_check CHECK (square_feet IS NULL OR square_feet >= 0)
+);
+
+CREATE TABLE public.crm_tags (
+  id uuid DEFAULT gen_random_uuid() NOT NULL,
+  profile_id uuid NOT NULL,
+  name text NOT NULL,
+  color text DEFAULT '#256f68'::text NOT NULL,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  updated_at timestamp with time zone DEFAULT now() NOT NULL,
+  CONSTRAINT crm_tags_id_profile_id_key UNIQUE (id, profile_id),
+  CONSTRAINT crm_tags_pkey PRIMARY KEY (id),
+  CONSTRAINT crm_tags_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES profiles(id) ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT crm_tags_profile_id_name_key UNIQUE (profile_id, name)
+);
+
+CREATE TABLE public.crm_tasks (
+  id uuid DEFAULT gen_random_uuid() NOT NULL,
+  profile_id uuid NOT NULL,
+  contact_id uuid,
+  property_id uuid,
+  transaction_id uuid,
+  title text NOT NULL,
+  task_type text DEFAULT 'follow_up'::text NOT NULL,
+  priority text DEFAULT 'normal'::text NOT NULL,
+  due_at timestamp with time zone,
+  completed_at timestamp with time zone,
+  details text,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  updated_at timestamp with time zone DEFAULT now() NOT NULL,
+  CONSTRAINT crm_tasks_contact_id_profile_id_fkey FOREIGN KEY (contact_id, profile_id) REFERENCES crm_contacts(id, profile_id) ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT crm_tasks_id_profile_id_key UNIQUE (id, profile_id),
+  CONSTRAINT crm_tasks_pkey PRIMARY KEY (id),
+  CONSTRAINT crm_tasks_priority_check CHECK (priority = ANY (ARRAY['low'::text, 'normal'::text, 'high'::text])),
+  CONSTRAINT crm_tasks_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES profiles(id) ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT crm_tasks_property_id_profile_id_fkey FOREIGN KEY (property_id, profile_id) REFERENCES crm_properties(id, profile_id) ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT crm_tasks_task_type_check CHECK (task_type = ANY (ARRAY['follow_up'::text, 'call'::text, 'email'::text, 'showing'::text, 'open_house'::text, 'inspection'::text, 'appraisal'::text, 'documents'::text, 'closing'::text, 'other'::text])),
+  CONSTRAINT crm_tasks_transaction_id_profile_id_fkey FOREIGN KEY (transaction_id, profile_id) REFERENCES crm_transactions(id, profile_id) ON UPDATE CASCADE ON DELETE CASCADE
+);
+
+CREATE TABLE public.crm_transactions (
+  id uuid DEFAULT gen_random_uuid() NOT NULL,
+  profile_id uuid NOT NULL,
+  title text NOT NULL,
+  contact_id uuid,
+  property_id uuid,
+  partner_id uuid,
+  side text DEFAULT 'buyer'::text NOT NULL,
+  status text DEFAULT 'active'::text NOT NULL,
+  estimated_value numeric(14,2),
+  offer_amount numeric(14,2),
+  expected_closing_date date,
+  actual_closing_date date,
+  estimated_commission numeric(14,2),
+  actual_commission numeric(14,2),
+  lead_source text,
+  description text,
+  "position" integer DEFAULT 0 NOT NULL,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  updated_at timestamp with time zone DEFAULT now() NOT NULL,
+  CONSTRAINT crm_transactions_actual_commission_check CHECK (actual_commission IS NULL OR actual_commission >= 0::numeric),
+  CONSTRAINT crm_transactions_contact_id_profile_id_fkey FOREIGN KEY (contact_id, profile_id) REFERENCES crm_contacts(id, profile_id) ON UPDATE CASCADE ON DELETE RESTRICT,
+  CONSTRAINT crm_transactions_estimated_commission_check CHECK (estimated_commission IS NULL OR estimated_commission >= 0::numeric),
+  CONSTRAINT crm_transactions_estimated_value_check CHECK (estimated_value IS NULL OR estimated_value >= 0::numeric),
+  CONSTRAINT crm_transactions_id_profile_id_key UNIQUE (id, profile_id),
+  CONSTRAINT crm_transactions_offer_amount_check CHECK (offer_amount IS NULL OR offer_amount >= 0::numeric),
+  CONSTRAINT crm_transactions_partner_id_profile_id_fkey FOREIGN KEY (partner_id, profile_id) REFERENCES crm_partners(id, profile_id) ON UPDATE CASCADE ON DELETE RESTRICT,
+  CONSTRAINT crm_transactions_pkey PRIMARY KEY (id),
+  CONSTRAINT crm_transactions_position_check CHECK ("position" >= 0),
+  CONSTRAINT crm_transactions_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES profiles(id) ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT crm_transactions_property_id_profile_id_fkey FOREIGN KEY (property_id, profile_id) REFERENCES crm_properties(id, profile_id) ON UPDATE CASCADE ON DELETE RESTRICT,
+  CONSTRAINT crm_transactions_side_check CHECK (side = ANY (ARRAY['buyer'::text, 'seller'::text, 'landlord'::text, 'tenant'::text, 'referral'::text, 'other'::text])),
+  CONSTRAINT crm_transactions_status_check CHECK (status = ANY (ARRAY['active'::text, 'won'::text, 'lost'::text, 'on_hold'::text]))
+);
+
+CREATE TABLE public.google_business_connections (
+  id uuid DEFAULT gen_random_uuid() NOT NULL,
+  profile_id uuid NOT NULL,
+  zernio_profile_id text NOT NULL,
+  zernio_account_id text NOT NULL,
+  provider_account_name text,
+  status text DEFAULT 'active'::text NOT NULL,
+  needs_reconnection boolean DEFAULT false NOT NULL,
+  sync_status text DEFAULT 'pending'::text NOT NULL,
+  sync_error text,
+  last_sync_started_at timestamp with time zone,
+  last_synced_at timestamp with time zone,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  updated_at timestamp with time zone DEFAULT now() NOT NULL,
+  CONSTRAINT google_business_connections_pkey PRIMARY KEY (id),
+  CONSTRAINT google_business_connections_profile_account_key UNIQUE (profile_id, zernio_account_id),
+  CONSTRAINT google_business_connections_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES profiles(id) ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT google_business_connections_status_check CHECK (status = ANY (ARRAY['active'::text, 'disconnected'::text, 'error'::text])),
+  CONSTRAINT google_business_connections_sync_status_check CHECK (sync_status = ANY (ARRAY['pending'::text, 'syncing'::text, 'synced'::text, 'failed'::text]))
+);
+
+CREATE TABLE public.google_business_locations (
+  id uuid DEFAULT gen_random_uuid() NOT NULL,
+  connection_id uuid NOT NULL,
+  zernio_location_id text NOT NULL,
+  google_account_id text,
+  google_location_name text,
+  store_code text,
+  title text DEFAULT ''::text NOT NULL,
+  formatted_address text,
+  storefront_address jsonb,
+  primary_phone text,
+  additional_phones jsonb DEFAULT '[]'::jsonb NOT NULL,
+  website_uri text,
+  description text,
+  categories jsonb DEFAULT '{}'::jsonb NOT NULL,
+  regular_hours jsonb DEFAULT '{"periods": []}'::jsonb NOT NULL,
+  special_hours jsonb DEFAULT '{"specialHourPeriods": []}'::jsonb NOT NULL,
+  services jsonb DEFAULT '[]'::jsonb NOT NULL,
+  place_id text,
+  maps_uri text,
+  review_url text,
+  is_verified boolean DEFAULT false NOT NULL,
+  average_rating numeric(3,2),
+  review_count integer DEFAULT 0 NOT NULL,
+  is_selected boolean DEFAULT false NOT NULL,
+  is_available boolean DEFAULT true NOT NULL,
+  mutation_version bigint DEFAULT 0 NOT NULL,
+  last_mutated_at timestamp with time zone,
+  last_sync_started_at timestamp with time zone,
+  last_synced_at timestamp with time zone,
+  sync_status text DEFAULT 'pending'::text NOT NULL,
+  sync_error text,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  updated_at timestamp with time zone DEFAULT now() NOT NULL,
+  open_info jsonb DEFAULT '{}'::jsonb NOT NULL,
+  service_area jsonb DEFAULT '{}'::jsonb NOT NULL,
+  more_hours jsonb DEFAULT '[]'::jsonb NOT NULL,
+  attributes jsonb DEFAULT '[]'::jsonb NOT NULL,
+  place_actions jsonb DEFAULT '[]'::jsonb NOT NULL,
+  CONSTRAINT google_business_locations_additional_phones_check CHECK (jsonb_typeof(additional_phones) = 'array'::text),
+  CONSTRAINT google_business_locations_attributes_check CHECK (jsonb_typeof(attributes) = 'array'::text),
+  CONSTRAINT google_business_locations_categories_check CHECK (jsonb_typeof(categories) = 'object'::text),
+  CONSTRAINT google_business_locations_connection_id_fkey FOREIGN KEY (connection_id) REFERENCES google_business_connections(id) ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT google_business_locations_connection_location_key UNIQUE (connection_id, zernio_location_id),
+  CONSTRAINT google_business_locations_more_hours_check CHECK (jsonb_typeof(more_hours) = 'array'::text),
+  CONSTRAINT google_business_locations_mutation_version_check CHECK (mutation_version >= 0),
+  CONSTRAINT google_business_locations_open_info_check CHECK (jsonb_typeof(open_info) = 'object'::text),
+  CONSTRAINT google_business_locations_pkey PRIMARY KEY (id),
+  CONSTRAINT google_business_locations_place_actions_check CHECK (jsonb_typeof(place_actions) = 'array'::text),
+  CONSTRAINT google_business_locations_rating_check CHECK (average_rating IS NULL OR average_rating >= 0::numeric AND average_rating <= 5::numeric),
+  CONSTRAINT google_business_locations_review_count_check CHECK (review_count >= 0),
+  CONSTRAINT google_business_locations_service_area_check CHECK (jsonb_typeof(service_area) = 'object'::text),
+  CONSTRAINT google_business_locations_services_check CHECK (jsonb_typeof(services) = 'array'::text),
+  CONSTRAINT google_business_locations_special_hours_check CHECK (jsonb_typeof(special_hours) = 'object'::text),
+  CONSTRAINT google_business_locations_storefront_address_object_check CHECK (storefront_address IS NULL OR jsonb_typeof(storefront_address) = 'object'::text),
+  CONSTRAINT google_business_locations_sync_status_check CHECK (sync_status = ANY (ARRAY['pending'::text, 'syncing'::text, 'synced'::text, 'failed'::text]))
+);
+
+CREATE TABLE public.google_business_metrics (
+  id uuid DEFAULT gen_random_uuid() NOT NULL,
+  location_id uuid NOT NULL,
+  metric_date date NOT NULL,
+  metric_name text NOT NULL,
+  metric_value bigint DEFAULT 0 NOT NULL,
+  synced_at timestamp with time zone DEFAULT now() NOT NULL,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  updated_at timestamp with time zone DEFAULT now() NOT NULL,
+  CONSTRAINT google_business_metrics_location_date_name_key UNIQUE (location_id, metric_date, metric_name),
+  CONSTRAINT google_business_metrics_location_id_fkey FOREIGN KEY (location_id) REFERENCES google_business_locations(id) ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT google_business_metrics_pkey PRIMARY KEY (id),
+  CONSTRAINT google_business_metrics_value_check CHECK (metric_value >= 0)
+);
+
+CREATE TABLE public.google_business_reviews (
+  id uuid DEFAULT gen_random_uuid() NOT NULL,
+  location_id uuid NOT NULL,
+  provider_review_id text NOT NULL,
+  provider_resource_name text,
+  reviewer_name text DEFAULT 'Google user'::text NOT NULL,
+  reviewer_photo_url text,
+  is_anonymous boolean DEFAULT false NOT NULL,
+  rating smallint NOT NULL,
+  comment text,
+  reply_comment text,
+  reply_updated_at timestamp with time zone,
+  provider_created_at timestamp with time zone,
+  provider_updated_at timestamp with time zone,
+  synced_at timestamp with time zone DEFAULT now() NOT NULL,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  updated_at timestamp with time zone DEFAULT now() NOT NULL,
+  CONSTRAINT google_business_reviews_location_id_fkey FOREIGN KEY (location_id) REFERENCES google_business_locations(id) ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT google_business_reviews_location_review_key UNIQUE (location_id, provider_review_id),
+  CONSTRAINT google_business_reviews_pkey PRIMARY KEY (id),
+  CONSTRAINT google_business_reviews_rating_check CHECK (rating >= 1 AND rating <= 5)
+);
+
+CREATE TABLE public.google_business_search_keywords (
+  id uuid DEFAULT gen_random_uuid() NOT NULL,
+  location_id uuid NOT NULL,
+  period_start date NOT NULL,
+  period_end date NOT NULL,
+  keyword text NOT NULL,
+  impressions bigint DEFAULT 0 NOT NULL,
+  synced_at timestamp with time zone DEFAULT now() NOT NULL,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  updated_at timestamp with time zone DEFAULT now() NOT NULL,
+  CONSTRAINT google_business_search_keywords_impressions_check CHECK (impressions >= 0),
+  CONSTRAINT google_business_search_keywords_location_id_fkey FOREIGN KEY (location_id) REFERENCES google_business_locations(id) ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT google_business_search_keywords_location_period_keyword_key UNIQUE (location_id, period_start, period_end, keyword),
+  CONSTRAINT google_business_search_keywords_period_end_check CHECK (period_end = date_trunc('month'::text, period_end::timestamp with time zone)::date AND period_end >= period_start),
+  CONSTRAINT google_business_search_keywords_period_start_check CHECK (period_start = date_trunc('month'::text, period_start::timestamp with time zone)::date),
+  CONSTRAINT google_business_search_keywords_pkey PRIMARY KEY (id)
+);
+
+CREATE TABLE public.google_business_webhook_events (
+  event_id text NOT NULL,
+  event_type text NOT NULL,
+  zernio_account_id text,
+  received_at timestamp with time zone DEFAULT now() NOT NULL,
+  processed_at timestamp with time zone,
+  error text,
+  payload jsonb NOT NULL,
+  CONSTRAINT google_business_webhook_events_pkey PRIMARY KEY (event_id)
+);
+
+CREATE TABLE public.images (
+  id uuid DEFAULT gen_random_uuid() NOT NULL,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  path text,
+  google_business_location_id uuid,
+  provider_media_id text,
+  media_category text,
+  source text,
+  width integer,
+  height integer,
+  updated_at timestamp with time zone DEFAULT now() NOT NULL,
+  CONSTRAINT images_google_business_location_id_fkey FOREIGN KEY (google_business_location_id) REFERENCES google_business_locations(id) ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT images_pkey PRIMARY KEY (id)
+);
+
+CREATE TABLE public.media (
+  id uuid DEFAULT gen_random_uuid() NOT NULL,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  schedule_id uuid,
+  image_design jsonb,
+  display_order smallint,
+  template_id uuid,
+  post_project_id uuid,
+  posting_run_id uuid,
+  CONSTRAINT media_display_order_positive CHECK (display_order IS NULL OR display_order > 0) NOT VALID,
+  CONSTRAINT media_has_exactly_one_parent CHECK (num_nonnulls(schedule_id, template_id, post_project_id, posting_run_id) = 1) NOT VALID,
+  CONSTRAINT media_pkey PRIMARY KEY (id),
+  CONSTRAINT media_post_project_id_fkey FOREIGN KEY (post_project_id) REFERENCES post_projects(id) ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT media_posting_run_id_fkey FOREIGN KEY (posting_run_id) REFERENCES posting_runs(id) ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT media_schedule_id_fkey FOREIGN KEY (schedule_id) REFERENCES schedules(id) ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT media_template_id_fkey FOREIGN KEY (template_id) REFERENCES templates(id) ON DELETE CASCADE
+);
+
+CREATE TABLE public.newsletter_audience_contact_connections (
+  id uuid DEFAULT gen_random_uuid() NOT NULL,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  newsletter_audience_id uuid,
+  crm_contact_id uuid,
+  CONSTRAINT newsletter_audience_contact_connect_newsletter_audience_id_fkey FOREIGN KEY (newsletter_audience_id) REFERENCES newsletter_audiences(id) ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT newsletter_audience_contact_connections_crm_contact_id_fkey FOREIGN KEY (crm_contact_id) REFERENCES crm_contacts(id) ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT newsletter_audience_contact_connections_pkey PRIMARY KEY (id)
+);
+
+CREATE TABLE public.newsletter_audiences (
+  id uuid DEFAULT gen_random_uuid() NOT NULL,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  profile_id uuid,
+  name text DEFAULT 'Audience'::text NOT NULL,
+  CONSTRAINT newsletter_audiences_pkey PRIMARY KEY (id),
+  CONSTRAINT newsletter_audiences_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES profiles(id) ON UPDATE CASCADE ON DELETE CASCADE
+);
+
+CREATE TABLE public.newsletter_campaign_audience_connections (
+  id uuid DEFAULT gen_random_uuid() NOT NULL,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  newsletter_campaign_id uuid,
+  newsletter_audience_id uuid,
+  CONSTRAINT newsletter_campaign_audience_connec_newsletter_audience_id_fkey FOREIGN KEY (newsletter_audience_id) REFERENCES newsletter_audiences(id) ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT newsletter_campaign_audience_connec_newsletter_campaign_id_fkey FOREIGN KEY (newsletter_campaign_id) REFERENCES newsletter_campaigns(id) ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT newsletter_campaign_audience_connections_pkey PRIMARY KEY (id)
+);
+
+CREATE TABLE public.newsletter_campaigns (
+  id uuid DEFAULT gen_random_uuid() NOT NULL,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  profile_id uuid,
+  newsletter_email_id uuid,
+  subject_line text,
+  preview_text text,
+  from_name text,
+  send_time timestamp with time zone,
+  from_email text,
+  status text DEFAULT 'draft'::text NOT NULL,
+  dispatch_status text DEFAULT 'not_queued'::text NOT NULL,
+  recipient_preparation_status text DEFAULT 'not_started'::text NOT NULL,
+  recipient_preparation_started_at timestamp with time zone,
+  recipient_prepared_at timestamp with time zone,
+  dispatch_queued_at timestamp with time zone,
+  fanout_completed_at timestamp with time zone,
+  completed_at timestamp with time zone,
+  cancelled_at timestamp with time zone,
+  last_error text,
+  sqs_message_id text,
+  total_send_count integer DEFAULT 0 NOT NULL,
+  terminal_send_count integer DEFAULT 0 NOT NULL,
+  sent_count integer DEFAULT 0 NOT NULL,
+  failed_count integer DEFAULT 0 NOT NULL,
+  suppressed_count integer DEFAULT 0 NOT NULL,
+  cancelled_count integer DEFAULT 0 NOT NULL,
+  uncertain_count integer DEFAULT 0 NOT NULL,
+  newsletter_sending_identity_id uuid,
+  newsletter_ses_tenant_id uuid,
+  CONSTRAINT newsletter_campaigns_dispatch_status_check CHECK (dispatch_status = ANY (ARRAY['not_queued'::text, 'queued'::text, 'queue_failed'::text, 'fanout_complete'::text])) NOT VALID,
+  CONSTRAINT newsletter_campaigns_newsletter_email_id_fkey FOREIGN KEY (newsletter_email_id) REFERENCES newsletter_emails(id) ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT newsletter_campaigns_pkey PRIMARY KEY (id),
+  CONSTRAINT newsletter_campaigns_preparation_status_check CHECK (recipient_preparation_status = ANY (ARRAY['not_started'::text, 'preparing'::text, 'prepared'::text, 'failed'::text])) NOT VALID,
+  CONSTRAINT newsletter_campaigns_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES profiles(id) ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT newsletter_campaigns_sending_identity_fkey FOREIGN KEY (newsletter_sending_identity_id) REFERENCES newsletter_sending_identities(id),
+  CONSTRAINT newsletter_campaigns_ses_tenant_fkey FOREIGN KEY (newsletter_ses_tenant_id) REFERENCES newsletter_ses_tenants(id),
+  CONSTRAINT newsletter_campaigns_status_check CHECK (status = ANY (ARRAY['draft'::text, 'preparing'::text, 'queued'::text, 'dispatching'::text, 'sending'::text, 'completed'::text, 'cancelled'::text, 'failed'::text])) NOT VALID
+);
+
+CREATE TABLE public.newsletter_ses_tenants (
+  id uuid DEFAULT gen_random_uuid() NOT NULL,
+  profile_id uuid NOT NULL,
+  tenant_name text NOT NULL,
+  ses_tenant_id text,
+  ses_tenant_arn text,
+  configuration_set_name text NOT NULL,
+  status text DEFAULT 'pending'::text NOT NULL,
+  suppression_scope text DEFAULT 'TENANT'::text NOT NULL,
+  reputation_policy text DEFAULT 'STANDARD'::text NOT NULL,
+  attempt_count integer DEFAULT 0 NOT NULL,
+  last_attempt_at timestamp with time zone,
+  next_attempt_at timestamp with time zone,
+  ready_at timestamp with time zone,
+  last_error text,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  updated_at timestamp with time zone DEFAULT now() NOT NULL,
+  CONSTRAINT newsletter_ses_tenants_pkey PRIMARY KEY (id),
+  CONSTRAINT newsletter_ses_tenants_profile_id_key UNIQUE (profile_id),
+  CONSTRAINT newsletter_ses_tenants_tenant_name_key UNIQUE (tenant_name),
+  CONSTRAINT newsletter_ses_tenants_ses_tenant_id_key UNIQUE (ses_tenant_id),
+  CONSTRAINT newsletter_ses_tenants_ses_tenant_arn_key UNIQUE (ses_tenant_arn),
+  CONSTRAINT newsletter_ses_tenants_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES profiles(id) ON DELETE CASCADE,
+  CONSTRAINT newsletter_ses_tenants_status_check CHECK (status = ANY (ARRAY['pending'::text, 'provisioning'::text, 'ready'::text, 'failed'::text])),
+  CONSTRAINT newsletter_ses_tenants_suppression_check CHECK (suppression_scope = 'TENANT'::text),
+  CONSTRAINT newsletter_ses_tenants_reputation_check CHECK (reputation_policy = 'STANDARD'::text)
+);
+
+CREATE TABLE public.newsletter_sending_identities (
+  id uuid DEFAULT gen_random_uuid() NOT NULL,
+  profile_id uuid NOT NULL,
+  identity_domain text NOT NULL,
+  from_local_part text NOT NULL,
+  from_email text NOT NULL,
+  mail_from_domain text NOT NULL,
+  reply_to_email text NOT NULL,
+  reply_to_verified_at timestamp with time zone,
+  ses_identity_arn text,
+  verification_status text DEFAULT 'PENDING'::text NOT NULL,
+  dkim_tokens text[],
+  status text DEFAULT 'pending'::text NOT NULL,
+  verified_at timestamp with time zone,
+  ready_at timestamp with time zone,
+  last_error text,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  updated_at timestamp with time zone DEFAULT now() NOT NULL,
+  CONSTRAINT newsletter_sending_identities_pkey PRIMARY KEY (id),
+  CONSTRAINT newsletter_sending_identities_profile_id_key UNIQUE (profile_id),
+  CONSTRAINT newsletter_sending_identities_identity_domain_key UNIQUE (identity_domain),
+  CONSTRAINT newsletter_sending_identities_from_email_key UNIQUE (from_email),
+  CONSTRAINT newsletter_sending_identities_mail_from_domain_key UNIQUE (mail_from_domain),
+  CONSTRAINT newsletter_sending_identities_ses_identity_arn_key UNIQUE (ses_identity_arn),
+  CONSTRAINT newsletter_sending_identities_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES profiles(id) ON DELETE CASCADE,
+  CONSTRAINT newsletter_sending_identities_status_check CHECK (status = ANY (ARRAY['pending'::text, 'provisioning'::text, 'ready'::text, 'failed'::text])),
+  CONSTRAINT newsletter_sending_identities_domain_check CHECK (identity_domain ~~ 'mail-%.postpoochmail.com'::text),
+  CONSTRAINT newsletter_sending_identities_from_check CHECK (from_email = ((from_local_part || '@'::text) || identity_domain)),
+  CONSTRAINT newsletter_sending_identities_mail_from_check CHECK (mail_from_domain = ('bounce.'::text || identity_domain))
+);
+
+CREATE TABLE public.newsletter_emails (
+  id uuid DEFAULT gen_random_uuid() NOT NULL,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  newsletter_campaign_id uuid,
+  profile_id uuid,
+  content jsonb,
+  CONSTRAINT newsletter_emails_content_document_check CHECK (content IS NULL OR jsonb_typeof(content) = 'object'::text OR jsonb_typeof(content) = 'string'::text),
+  CONSTRAINT newsletter_emails_newsletter_campaign_id_fkey FOREIGN KEY (newsletter_campaign_id) REFERENCES newsletter_campaigns(id) ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT newsletter_emails_pkey PRIMARY KEY (id),
+  CONSTRAINT newsletter_emails_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES profiles(id) ON UPDATE CASCADE ON DELETE CASCADE
+);
+
+CREATE TABLE public.newsletter_sends (
+  id uuid DEFAULT gen_random_uuid() NOT NULL,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  newsletter_campaign_id uuid,
+  crm_contact_id uuid,
+  email_address text,
+  status text DEFAULT 'pending'::text NOT NULL,
+  queued_at timestamp with time zone,
+  processing_started_at timestamp with time zone,
+  processing_lease_expires_at timestamp with time zone,
+  processing_claim_token uuid,
+  ses_request_started_at timestamp with time zone,
+  sent_at timestamp with time zone,
+  failed_at timestamp with time zone,
+  last_attempt_at timestamp with time zone,
+  attempt_count integer DEFAULT 0 NOT NULL,
+  last_error text,
+  ses_message_id text,
+  unsubscribe_token uuid DEFAULT gen_random_uuid() NOT NULL,
+  CONSTRAINT newsletter_sends_crm_contact_id_fkey FOREIGN KEY (crm_contact_id) REFERENCES crm_contacts(id),
+  CONSTRAINT newsletter_sends_newsletter_campaign_id_fkey FOREIGN KEY (newsletter_campaign_id) REFERENCES newsletter_campaigns(id) ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT newsletter_sends_pkey PRIMARY KEY (id),
+  CONSTRAINT newsletter_sends_status_check CHECK (status = ANY (ARRAY['pending'::text, 'sending'::text, 'sent'::text, 'failed'::text, 'cancelled'::text, 'suppressed'::text, 'uncertain'::text])) NOT VALID
+);
+
+CREATE TABLE public.newsletter_templates (
+  id uuid DEFAULT gen_random_uuid() NOT NULL,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  content text,
+  preview_img_path text,
+  CONSTRAINT newsletter_templates_pkey PRIMARY KEY (id)
+);
+
+CREATE TABLE public.pages (
+  id uuid DEFAULT gen_random_uuid() NOT NULL,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  website_id uuid NOT NULL,
+  path text NOT NULL,
+  content jsonb DEFAULT '{}'::jsonb NOT NULL,
+  template text NOT NULL,
+  CONSTRAINT pages_pkey PRIMARY KEY (id),
+  CONSTRAINT pages_website_id_fkey FOREIGN KEY (website_id) REFERENCES websites(id) ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT pages_website_template_path_key UNIQUE (website_id, template, path)
+);
+
+CREATE TABLE public.post_projects (
+  id uuid DEFAULT gen_random_uuid() NOT NULL,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  profile_id uuid,
+  name text,
+  CONSTRAINT post_projects_pkey PRIMARY KEY (id),
+  CONSTRAINT post_projects_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES profiles(id) ON UPDATE CASCADE ON DELETE CASCADE
+);
+
+CREATE TABLE public.posting_runs (
+  id uuid DEFAULT gen_random_uuid() NOT NULL,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  updated_at timestamp with time zone DEFAULT now() NOT NULL,
+  schedule_id uuid NOT NULL,
+  occurrence_at timestamp with time zone NOT NULL,
+  trigger_run_id text,
+  status text DEFAULT 'queued'::text NOT NULL,
+  template_id uuid,
+  zernio_request_id uuid NOT NULL,
+  zernio_post_id text,
+  media_urls jsonb,
+  attempt_count integer DEFAULT 0 NOT NULL,
+  lease_expires_at timestamp with time zone,
+  published_at timestamp with time zone,
+  last_error text,
+  context_snapshot jsonb,
+  creative_output jsonb,
+  caption text,
+  history_summary text,
+  visual_qa_status text,
+  visual_revision_count smallint DEFAULT 0 NOT NULL,
+  final_temporary_satisfaction jsonb,
+  CONSTRAINT posting_runs_attempt_count_check CHECK (attempt_count >= 0),
+  CONSTRAINT posting_runs_caption_length CHECK (caption IS NULL OR char_length(caption) >= 1 AND char_length(caption) <= 10000),
+  CONSTRAINT posting_runs_context_snapshot_shape CHECK (context_snapshot IS NULL OR jsonb_typeof(context_snapshot) = 'object'::text),
+  CONSTRAINT posting_runs_creative_output_shape CHECK (creative_output IS NULL OR jsonb_typeof(creative_output) = 'object'::text),
+  CONSTRAINT posting_runs_history_summary_length CHECK (history_summary IS NULL OR char_length(history_summary) >= 1 AND char_length(history_summary) <= 1000),
+  CONSTRAINT posting_runs_media_urls_is_array CHECK (media_urls IS NULL OR jsonb_typeof(media_urls) = 'array'::text),
+  CONSTRAINT posting_runs_pkey PRIMARY KEY (id),
+  CONSTRAINT posting_runs_schedule_occurrence_key UNIQUE (schedule_id, occurrence_at),
+  CONSTRAINT posting_runs_status_check CHECK (status = ANY (ARRAY['queued'::text, 'processing'::text, 'published'::text, 'failed'::text])),
+  CONSTRAINT posting_runs_temp_satisfaction_requires_acceptance CHECK (final_temporary_satisfaction IS NULL OR (visual_qa_status = ANY (ARRAY['accepted'::text, 'accepted_with_minor_issues'::text]))),
+  CONSTRAINT posting_runs_temp_satisfaction_shape CHECK (final_temporary_satisfaction IS NULL OR jsonb_typeof(final_temporary_satisfaction) = 'object'::text AND jsonb_typeof(final_temporary_satisfaction -> 'instructionIds'::text) = 'array'::text AND jsonb_typeof(final_temporary_satisfaction -> 'visualRevision'::text) = 'number'::text AND (final_temporary_satisfaction ->> 'schemaVersion'::text) = 'temporary-satisfaction.v1'::text),
+  CONSTRAINT posting_runs_template_id_fkey FOREIGN KEY (template_id) REFERENCES templates(id) ON UPDATE CASCADE ON DELETE SET NULL,
+  CONSTRAINT posting_runs_visual_qa_status_check CHECK (visual_qa_status IS NULL OR (visual_qa_status = ANY (ARRAY['pending'::text, 'needs_revision'::text, 'accepted'::text, 'accepted_with_minor_issues'::text, 'blocked'::text]))),
+  CONSTRAINT posting_runs_visual_revision_count_check CHECK (visual_revision_count >= 0 AND visual_revision_count <= 2)
+);
+
+CREATE TABLE public.profiles (
+  id uuid NOT NULL,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  social_profile_id text,
+  instagram_account_id text,
+  facebook_account_id text,
+  google_business_account_id text,
+  CONSTRAINT profiles_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id) ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT profiles_pkey PRIMARY KEY (id)
+);
+
+CREATE TABLE public.properties (
+  id uuid DEFAULT gen_random_uuid() NOT NULL,
+  website_id uuid NOT NULL,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  updated_at timestamp with time zone DEFAULT now() NOT NULL,
+  slug text NOT NULL,
+  status text DEFAULT 'for_sale'::text NOT NULL,
+  property_type text DEFAULT ''::text NOT NULL,
+  title text DEFAULT ''::text NOT NULL,
+  address text DEFAULT ''::text NOT NULL,
+  neighborhood text DEFAULT ''::text NOT NULL,
+  city text DEFAULT ''::text NOT NULL,
+  region text DEFAULT ''::text NOT NULL,
+  postal_code text DEFAULT ''::text NOT NULL,
+  country text DEFAULT 'US'::text NOT NULL,
+  price_amount numeric(14,2),
+  currency text DEFAULT 'USD'::text NOT NULL,
+  bedrooms numeric(5,1),
+  bathrooms numeric(5,1),
+  living_area numeric(12,2),
+  lot_size numeric(14,2),
+  area_unit text DEFAULT 'sqft'::text NOT NULL,
+  year_built integer,
+  description text DEFAULT ''::text NOT NULL,
+  features jsonb DEFAULT '[]'::jsonb NOT NULL,
+  images jsonb DEFAULT '[]'::jsonb NOT NULL,
+  featured boolean DEFAULT false NOT NULL,
+  is_visible boolean DEFAULT true NOT NULL,
+  display_order integer DEFAULT 0 NOT NULL,
+  CONSTRAINT properties_area_unit_check CHECK (area_unit = ANY (ARRAY['sqft'::text, 'sqm'::text])),
+  CONSTRAINT properties_bathrooms_check CHECK (bathrooms IS NULL OR bathrooms >= 0::numeric),
+  CONSTRAINT properties_bedrooms_check CHECK (bedrooms IS NULL OR bedrooms >= 0::numeric),
+  CONSTRAINT properties_country_check CHECK (country = ''::text OR country ~ '^[A-Z]{2}$'::text),
+  CONSTRAINT properties_currency_check CHECK (currency ~ '^[A-Z]{3}$'::text),
+  CONSTRAINT properties_display_order_check CHECK (display_order >= 0),
+  CONSTRAINT properties_features_array_check CHECK (jsonb_typeof(features) = 'array'::text),
+  CONSTRAINT properties_images_array_check CHECK (jsonb_typeof(images) = 'array'::text),
+  CONSTRAINT properties_living_area_check CHECK (living_area IS NULL OR living_area >= 0::numeric),
+  CONSTRAINT properties_lot_size_check CHECK (lot_size IS NULL OR lot_size >= 0::numeric),
+  CONSTRAINT properties_pkey PRIMARY KEY (id),
+  CONSTRAINT properties_price_check CHECK (price_amount IS NULL OR price_amount >= 0::numeric),
+  CONSTRAINT properties_slug_check CHECK (slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$'::text),
+  CONSTRAINT properties_status_check CHECK (status = ANY (ARRAY['for_sale'::text, 'coming_soon'::text, 'pending'::text, 'sold'::text, 'for_rent'::text, 'rented'::text, 'off_market'::text])),
+  CONSTRAINT properties_visible_identity_check CHECK (NOT is_visible OR title <> ''::text OR address <> ''::text),
+  CONSTRAINT properties_website_id_fkey FOREIGN KEY (website_id) REFERENCES websites(id) ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT properties_year_built_check CHECK (year_built IS NULL OR year_built >= 1000 AND year_built <= 3000)
+);
+
+CREATE TABLE public.schedules (
+  id uuid DEFAULT gen_random_uuid() NOT NULL,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  profile_id uuid,
+  delete_after_use boolean,
+  platform text,
+  platform_account_id text,
+  uses_template boolean,
+  text text,
+  cron text,
+  CONSTRAINT schedules_pkey PRIMARY KEY (id),
+  CONSTRAINT schedules_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES profiles(id) ON UPDATE CASCADE ON DELETE CASCADE
+);
+
+CREATE TABLE public.social_media_assets (
+  id uuid DEFAULT gen_random_uuid() NOT NULL,
+  profile_id uuid NOT NULL,
+  storage_key text NOT NULL,
+  purpose text NOT NULL,
+  original_filename text NOT NULL,
+  mime_type text NOT NULL,
+  width integer NOT NULL,
+  height integer NOT NULL,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  deleted_at timestamp with time zone,
+  CONSTRAINT social_media_assets_deleted_at_check CHECK (deleted_at IS NULL OR deleted_at >= created_at),
+  CONSTRAINT social_media_assets_filename_length CHECK (char_length(original_filename) >= 1 AND char_length(original_filename) <= 255),
+  CONSTRAINT social_media_assets_height_check CHECK (height >= 1 AND height <= 20000),
+  CONSTRAINT social_media_assets_id_profile_key UNIQUE (id, profile_id),
+  CONSTRAINT social_media_assets_mime_type_check CHECK (mime_type = ANY (ARRAY['image/jpeg'::text, 'image/png'::text, 'image/webp'::text])),
+  CONSTRAINT social_media_assets_pkey PRIMARY KEY (id),
+  CONSTRAINT social_media_assets_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES profiles(id) ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT social_media_assets_purpose_check CHECK (purpose = ANY (ARRAY['headshot'::text, 'logo'::text, 'office'::text, 'listing'::text, 'community'::text, 'other'::text])),
+  CONSTRAINT social_media_assets_storage_key_key UNIQUE (storage_key),
+  CONSTRAINT social_media_assets_storage_key_length CHECK (char_length(storage_key) >= 1 AND char_length(storage_key) <= 1024),
+  CONSTRAINT social_media_assets_width_check CHECK (width >= 1 AND width <= 20000)
+);
+
+CREATE TABLE public.social_media_cities (
+  id uuid DEFAULT gen_random_uuid() NOT NULL,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  city_name text,
+  state_code text,
+  county text,
+  latitude double precision,
+  longitude double precision,
+  census_id text,
+  color text,
+  CONSTRAINT social_media_cities_pkey PRIMARY KEY (id)
+);
+
+CREATE TABLE public.social_media_context_changes (
+  id uuid DEFAULT gen_random_uuid() NOT NULL,
+  profile_id uuid NOT NULL,
+  note_id uuid NOT NULL,
+  outcome_id uuid NOT NULL,
+  category text NOT NULL,
+  operation text NOT NULL,
+  target_type text NOT NULL,
+  target_id uuid,
+  target_key text,
+  before_value jsonb,
+  after_value jsonb,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  CONSTRAINT social_media_context_changes_category_check CHECK (category = ANY (ARRAY['identity'::text, 'preference'::text, 'frequency'::text, 'temporary'::text, 'asset'::text])),
+  CONSTRAINT social_media_context_changes_note_fkey FOREIGN KEY (note_id, profile_id) REFERENCES social_media_notes(id, profile_id) ON UPDATE CASCADE ON DELETE RESTRICT,
+  CONSTRAINT social_media_context_changes_operation_check CHECK (operation = ANY (ARRAY['add'::text, 'update'::text, 'delete'::text])),
+  CONSTRAINT social_media_context_changes_outcome_fkey FOREIGN KEY (outcome_id, profile_id, note_id) REFERENCES social_media_note_outcomes(id, profile_id, note_id) ON UPDATE CASCADE ON DELETE RESTRICT,
+  CONSTRAINT social_media_context_changes_pkey PRIMARY KEY (id),
+  CONSTRAINT social_media_context_changes_target_check CHECK (target_id IS NOT NULL OR target_key IS NOT NULL),
+  CONSTRAINT social_media_context_changes_value_shape CHECK (operation = 'add'::text AND before_value IS NULL AND after_value IS NOT NULL OR operation = 'update'::text AND before_value IS NOT NULL AND after_value IS NOT NULL OR operation = 'delete'::text AND before_value IS NOT NULL AND after_value IS NULL)
+);
+
+CREATE TABLE public.social_media_context_states (
+  profile_id uuid NOT NULL,
+  revision bigint DEFAULT 0 NOT NULL,
+  time_zone text DEFAULT 'UTC'::text NOT NULL,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  updated_at timestamp with time zone DEFAULT now() NOT NULL,
+  CONSTRAINT social_media_context_states_pkey PRIMARY KEY (profile_id),
+  CONSTRAINT social_media_context_states_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES profiles(id) ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT social_media_context_states_revision_check CHECK (revision >= 0),
+  CONSTRAINT social_media_context_states_time_zone_check CHECK (char_length(time_zone) >= 1 AND char_length(time_zone) <= 64)
+);
+
+CREATE TABLE public.social_media_frequency_based_instructions (
+  id uuid DEFAULT gen_random_uuid() NOT NULL,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  profile_id uuid NOT NULL,
+  instruction text NOT NULL,
+  updated_at timestamp with time zone DEFAULT now() NOT NULL,
+  CONSTRAINT social_media_frequency_id_profile_key UNIQUE (id, profile_id),
+  CONSTRAINT social_media_frequency_instruction_length CHECK (char_length(btrim(instruction)) >= 1 AND char_length(btrim(instruction)) <= 500),
+  CONSTRAINT social_media_frequnce_based_instuctions_pkey PRIMARY KEY (id),
+  CONSTRAINT social_media_frequnce_based_instuctions_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES profiles(id) ON UPDATE CASCADE ON DELETE CASCADE
+);
+
+CREATE TABLE public.social_media_frequency_instruction_assets (
+  profile_id uuid NOT NULL,
+  frequency_instruction_id uuid NOT NULL,
+  asset_id uuid NOT NULL,
+  CONSTRAINT social_media_frequency_assets_owned_asset_fkey FOREIGN KEY (asset_id, profile_id) REFERENCES social_media_assets(id, profile_id) ON UPDATE CASCADE ON DELETE RESTRICT,
+  CONSTRAINT social_media_frequency_assets_owned_instruction_fkey FOREIGN KEY (frequency_instruction_id, profile_id) REFERENCES social_media_frequency_based_instructions(id, profile_id) ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT social_media_frequency_instruction_assets_pkey PRIMARY KEY (frequency_instruction_id, asset_id),
+  CONSTRAINT social_media_frequency_instruction_assets_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES profiles(id) ON UPDATE CASCADE ON DELETE CASCADE
+);
+
+CREATE TABLE public.social_media_identities (
+  id uuid DEFAULT gen_random_uuid() NOT NULL,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  profile_id uuid NOT NULL,
+  updated_at timestamp with time zone DEFAULT now() NOT NULL,
+  display_name text,
+  professional_title text,
+  brokerage_name text,
+  target_audience text,
+  specialties text[] DEFAULT '{}'::text[] NOT NULL,
+  personal_context text,
+  primary_brand_color text,
+  secondary_brand_color text,
+  CONSTRAINT social_media_identities_brokerage_name_length CHECK (brokerage_name IS NULL OR char_length(brokerage_name) >= 1 AND char_length(brokerage_name) <= 160),
+  CONSTRAINT social_media_identities_display_name_length CHECK (display_name IS NULL OR char_length(display_name) >= 1 AND char_length(display_name) <= 120),
+  CONSTRAINT social_media_identities_id_profile_key UNIQUE (id, profile_id),
+  CONSTRAINT social_media_identities_personal_context_length CHECK (personal_context IS NULL OR char_length(personal_context) >= 1 AND char_length(personal_context) <= 2000),
+  CONSTRAINT social_media_identities_pkey PRIMARY KEY (id),
+  CONSTRAINT social_media_identities_primary_color_format CHECK (primary_brand_color IS NULL OR primary_brand_color ~ '^#[0-9A-Fa-f]{6}$'::text),
+  CONSTRAINT social_media_identities_professional_title_length CHECK (professional_title IS NULL OR char_length(professional_title) >= 1 AND char_length(professional_title) <= 120),
+  CONSTRAINT social_media_identities_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES profiles(id) ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT social_media_identities_profile_key UNIQUE (profile_id),
+  CONSTRAINT social_media_identities_secondary_color_format CHECK (secondary_brand_color IS NULL OR secondary_brand_color ~ '^#[0-9A-Fa-f]{6}$'::text),
+  CONSTRAINT social_media_identities_specialties_count CHECK (cardinality(specialties) <= 20),
+  CONSTRAINT social_media_identities_target_audience_length CHECK (target_audience IS NULL OR char_length(target_audience) >= 1 AND char_length(target_audience) <= 1000)
+);
+
+CREATE TABLE public.social_media_identities_cities_connections (
+  id uuid DEFAULT gen_random_uuid() NOT NULL,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  city_id uuid NOT NULL,
+  identity_id uuid NOT NULL,
+  profile_id uuid NOT NULL,
+  CONSTRAINT social_media_identities_cities_connections_city_id_fkey FOREIGN KEY (city_id) REFERENCES social_media_cities(id) ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT social_media_identities_cities_connections_identity_id_fkey FOREIGN KEY (identity_id) REFERENCES social_media_identities(id) ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT social_media_identities_cities_connections_pkey PRIMARY KEY (id),
+  CONSTRAINT social_media_identity_cities_identity_city_key UNIQUE (identity_id, city_id),
+  CONSTRAINT social_media_identity_cities_owned_identity_fkey FOREIGN KEY (identity_id, profile_id) REFERENCES social_media_identities(id, profile_id) ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT social_media_identity_cities_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES profiles(id) ON UPDATE CASCADE ON DELETE CASCADE
+);
+
+CREATE TABLE public.social_media_note_assets (
+  profile_id uuid NOT NULL,
+  note_id uuid NOT NULL,
+  asset_id uuid NOT NULL,
+  CONSTRAINT social_media_note_assets_owned_asset_fkey FOREIGN KEY (asset_id, profile_id) REFERENCES social_media_assets(id, profile_id) ON UPDATE CASCADE ON DELETE RESTRICT,
+  CONSTRAINT social_media_note_assets_owned_note_fkey FOREIGN KEY (note_id, profile_id) REFERENCES social_media_notes(id, profile_id) ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT social_media_note_assets_pkey PRIMARY KEY (note_id, asset_id),
+  CONSTRAINT social_media_note_assets_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES profiles(id) ON UPDATE CASCADE ON DELETE CASCADE
+);
+
+CREATE TABLE public.social_media_note_outcomes (
+  id uuid DEFAULT gen_random_uuid() NOT NULL,
+  profile_id uuid NOT NULL,
+  note_id uuid NOT NULL,
+  attempt_number integer NOT NULL,
+  result_state text NOT NULL,
+  snapshot_revision bigint,
+  committed_revision bigint,
+  classification jsonb,
+  mutation_plan jsonb,
+  reason_code text,
+  detail jsonb DEFAULT '{}'::jsonb NOT NULL,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  CONSTRAINT social_media_note_outcomes_attempt_key UNIQUE (note_id, attempt_number),
+  CONSTRAINT social_media_note_outcomes_attempt_number_check CHECK (attempt_number >= 1 AND attempt_number <= 10),
+  CONSTRAINT social_media_note_outcomes_committed_revision_check CHECK (committed_revision IS NULL OR committed_revision >= 1),
+  CONSTRAINT social_media_note_outcomes_detail_check CHECK (jsonb_typeof(detail) = 'object'::text),
+  CONSTRAINT social_media_note_outcomes_id_owner_note_key UNIQUE (id, profile_id, note_id),
+  CONSTRAINT social_media_note_outcomes_json_shape CHECK ((classification IS NULL OR jsonb_typeof(classification) = 'object'::text) AND (mutation_plan IS NULL OR jsonb_typeof(mutation_plan) = 'object'::text)),
+  CONSTRAINT social_media_note_outcomes_note_fkey FOREIGN KEY (note_id, profile_id) REFERENCES social_media_notes(id, profile_id) ON UPDATE CASCADE ON DELETE RESTRICT,
+  CONSTRAINT social_media_note_outcomes_pkey PRIMARY KEY (id),
+  CONSTRAINT social_media_note_outcomes_result_state_check CHECK (result_state = ANY (ARRAY['applied'::text, 'no_change'::text, 'needs_review'::text, 'conflict'::text, 'infrastructure_failure'::text])),
+  CONSTRAINT social_media_note_outcomes_revision_shape CHECK (result_state = 'applied'::text AND snapshot_revision IS NOT NULL AND committed_revision = (snapshot_revision + 1) OR result_state <> 'applied'::text AND committed_revision IS NULL),
+  CONSTRAINT social_media_note_outcomes_snapshot_revision_check CHECK (snapshot_revision IS NULL OR snapshot_revision >= 0)
+);
+
+CREATE TABLE public.social_media_note_processing (
+  note_id uuid NOT NULL,
+  profile_id uuid NOT NULL,
+  status text DEFAULT 'pending'::text NOT NULL,
+  attempt_count integer DEFAULT 0 NOT NULL,
+  lease_token uuid,
+  lease_expires_at timestamp with time zone,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  updated_at timestamp with time zone DEFAULT now() NOT NULL,
+  CONSTRAINT social_media_note_processing_attempt_count_check CHECK (attempt_count >= 0 AND attempt_count <= 10),
+  CONSTRAINT social_media_note_processing_lease_shape CHECK (status = 'processing'::text AND lease_token IS NOT NULL AND lease_expires_at IS NOT NULL OR status <> 'processing'::text AND lease_token IS NULL AND lease_expires_at IS NULL),
+  CONSTRAINT social_media_note_processing_note_fkey FOREIGN KEY (note_id, profile_id) REFERENCES social_media_notes(id, profile_id) ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT social_media_note_processing_pkey PRIMARY KEY (note_id),
+  CONSTRAINT social_media_note_processing_status_check CHECK (status = ANY (ARRAY['pending'::text, 'processing'::text, 'finished'::text]))
+);
+
+CREATE TABLE public.social_media_notes (
+  id uuid DEFAULT gen_random_uuid() NOT NULL,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  profile_id uuid NOT NULL,
+  note text NOT NULL,
+  submission_key uuid NOT NULL,
+  CONSTRAINT social_media_notes_id_profile_key UNIQUE (id, profile_id),
+  CONSTRAINT social_media_notes_note_length CHECK (char_length(note) >= 1 AND char_length(note) <= 4000),
+  CONSTRAINT social_media_notes_pkey PRIMARY KEY (id),
+  CONSTRAINT social_media_notes_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT,
+  CONSTRAINT social_media_notes_profile_submission_key UNIQUE (profile_id, submission_key)
+);
+
+CREATE TABLE public.social_media_past_posts (
+  id uuid DEFAULT gen_random_uuid() NOT NULL,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  profile_id uuid NOT NULL,
+  posting_run_id uuid NOT NULL,
+  published_at timestamp with time zone NOT NULL,
+  summary text NOT NULL,
+  CONSTRAINT social_media_past_posts_pkey PRIMARY KEY (id),
+  CONSTRAINT social_media_past_posts_posting_run_id_fkey FOREIGN KEY (posting_run_id) REFERENCES posting_runs(id) ON UPDATE CASCADE ON DELETE RESTRICT,
+  CONSTRAINT social_media_past_posts_posting_run_key UNIQUE (posting_run_id),
+  CONSTRAINT social_media_past_posts_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES profiles(id) ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT social_media_past_posts_summary_length CHECK (char_length(btrim(summary)) >= 1 AND char_length(btrim(summary)) <= 1000)
+);
+
+CREATE TABLE public.social_media_preference_assets (
+  profile_id uuid NOT NULL,
+  preference_id uuid NOT NULL,
+  asset_id uuid NOT NULL,
+  CONSTRAINT social_media_preference_assets_owned_asset_fkey FOREIGN KEY (asset_id, profile_id) REFERENCES social_media_assets(id, profile_id) ON UPDATE CASCADE ON DELETE RESTRICT,
+  CONSTRAINT social_media_preference_assets_owned_preference_fkey FOREIGN KEY (preference_id, profile_id) REFERENCES social_media_preferences(id, profile_id) ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT social_media_preference_assets_pkey PRIMARY KEY (preference_id, asset_id),
+  CONSTRAINT social_media_preference_assets_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES profiles(id) ON UPDATE CASCADE ON DELETE CASCADE
+);
+
+CREATE TABLE public.social_media_preferences (
+  id uuid DEFAULT gen_random_uuid() NOT NULL,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  profile_id uuid NOT NULL,
+  instruction text NOT NULL,
+  updated_at timestamp with time zone DEFAULT now() NOT NULL,
+  CONSTRAINT social_media_preferences_id_profile_key UNIQUE (id, profile_id),
+  CONSTRAINT social_media_preferences_instruction_length CHECK (char_length(btrim(instruction)) >= 1 AND char_length(btrim(instruction)) <= 500),
+  CONSTRAINT social_media_preferences_pkey PRIMARY KEY (id),
+  CONSTRAINT social_media_preferences_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES profiles(id) ON UPDATE CASCADE ON DELETE CASCADE
+);
+
+CREATE TABLE public.social_media_schedules (
+  id uuid DEFAULT gen_random_uuid() NOT NULL,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  profile_id uuid DEFAULT gen_random_uuid(),
+  CONSTRAINT social_media_schedules_pkey PRIMARY KEY (id),
+  CONSTRAINT social_media_schedules_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES profiles(id) ON UPDATE CASCADE ON DELETE CASCADE
+);
+
+CREATE TABLE public.social_media_temporary_instruction_assets (
+  profile_id uuid NOT NULL,
+  temporary_instruction_id uuid NOT NULL,
+  asset_id uuid NOT NULL,
+  CONSTRAINT social_media_temp_assets_owned_asset_fkey FOREIGN KEY (asset_id, profile_id) REFERENCES social_media_assets(id, profile_id) ON UPDATE CASCADE ON DELETE RESTRICT,
+  CONSTRAINT social_media_temp_assets_owned_instruction_fkey FOREIGN KEY (temporary_instruction_id, profile_id) REFERENCES social_media_temporary_instructions(id, profile_id) ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT social_media_temporary_instruction_assets_pkey PRIMARY KEY (temporary_instruction_id, asset_id),
+  CONSTRAINT social_media_temporary_instruction_assets_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES profiles(id) ON UPDATE CASCADE ON DELETE CASCADE
+);
+
+CREATE TABLE public.social_media_temporary_instructions (
+  id uuid DEFAULT gen_random_uuid() NOT NULL,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  profile_id uuid NOT NULL,
+  updated_at timestamp with time zone DEFAULT now() NOT NULL,
+  instruction text NOT NULL,
+  instruction_type text NOT NULL,
+  remaining_posts integer,
+  starts_at timestamp with time zone,
+  ends_at timestamp with time zone,
+  source_time_zone text NOT NULL,
+  source_note_id uuid NOT NULL,
+  source_note_text text NOT NULL,
+  CONSTRAINT social_media_temporary_id_profile_key UNIQUE (id, profile_id),
+  CONSTRAINT social_media_temporary_insructions_pkey PRIMARY KEY (id),
+  CONSTRAINT social_media_temporary_insructions_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES profiles(id) ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT social_media_temporary_instruction_length CHECK (char_length(btrim(instruction)) >= 1 AND char_length(btrim(instruction)) <= 500),
+  CONSTRAINT social_media_temporary_shape_check CHECK (instruction_type = 'counter'::text AND remaining_posts IS NOT NULL AND remaining_posts >= 1 AND remaining_posts <= 100 AND starts_at IS NULL AND ends_at IS NULL OR instruction_type = 'date_range'::text AND remaining_posts IS NULL AND starts_at IS NOT NULL AND ends_at IS NOT NULL AND starts_at < ends_at),
+  CONSTRAINT social_media_temporary_source_note_fkey FOREIGN KEY (source_note_id, profile_id) REFERENCES social_media_notes(id, profile_id) ON UPDATE CASCADE ON DELETE RESTRICT,
+  CONSTRAINT social_media_temporary_source_note_length CHECK (char_length(source_note_text) >= 1 AND char_length(source_note_text) <= 4000),
+  CONSTRAINT social_media_temporary_source_time_zone_length CHECK (char_length(source_time_zone) >= 1 AND char_length(source_time_zone) <= 64)
+);
+
+CREATE TABLE public.templates (
+  id uuid DEFAULT gen_random_uuid() NOT NULL,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  text text,
+  ai_prompt text,
+  automate_accessible boolean,
+  editor_accessible boolean,
+  preview_path text,
+  CONSTRAINT templates_pkey PRIMARY KEY (id)
+);
+
+CREATE TABLE public.website_template_settings (
+  website_id uuid NOT NULL,
+  template text NOT NULL,
+  settings jsonb DEFAULT '{}'::jsonb NOT NULL,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  updated_at timestamp with time zone DEFAULT now() NOT NULL,
+  CONSTRAINT website_template_settings_pkey PRIMARY KEY (website_id, template),
+  CONSTRAINT website_template_settings_settings_object_check CHECK (jsonb_typeof(settings) = 'object'::text),
+  CONSTRAINT website_template_settings_website_id_fkey FOREIGN KEY (website_id) REFERENCES websites(id) ON UPDATE CASCADE ON DELETE CASCADE
+);
+
+CREATE TABLE public.websites (
+  id uuid DEFAULT gen_random_uuid() NOT NULL,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  profile_id uuid NOT NULL,
+  subdomain text,
+  template text,
+  settings jsonb DEFAULT '{}'::jsonb NOT NULL,
+  properties_enabled boolean DEFAULT true NOT NULL,
+  blog_posts_enabled boolean DEFAULT true NOT NULL,
+  CONSTRAINT websites_pkey PRIMARY KEY (id),
+  CONSTRAINT websites_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES profiles(id) ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT websites_subdomain_key UNIQUE (subdomain)
+);
+
+CREATE INDEX blog_posts_website_created_idx ON public.blog_posts USING btree (website_id, created_at DESC);
+
+CREATE INDEX crm_activities_profile_created_idx ON public.crm_activities USING btree (profile_id, created_at DESC);
+
+CREATE INDEX crm_contacts_profile_created_idx ON public.crm_contacts USING btree (profile_id, created_at DESC);
+
+CREATE INDEX crm_contacts_profile_follow_up_idx ON public.crm_contacts USING btree (profile_id, next_follow_up_at) WHERE (next_follow_up_at IS NOT NULL);
+
+CREATE INDEX crm_contacts_profile_name_idx ON public.crm_contacts USING btree (profile_id, lower(last_name), lower(first_name));
+
+CREATE INDEX crm_contacts_profile_stage_idx ON public.crm_contacts USING btree (profile_id, stage_id);
+
+CREATE INDEX crm_contacts_profile_status_idx ON public.crm_contacts USING btree (profile_id, lead_status, updated_at DESC);
+
+CREATE UNIQUE INDEX crm_contacts_relationships_pair_type_key ON public.crm_contacts_relationships USING btree (LEAST(person_1_id, person_2_id), GREATEST(person_1_id, person_2_id), crm_contacts_relationship_type_id);
+
+CREATE INDEX crm_contacts_relationships_person_1_idx ON public.crm_contacts_relationships USING btree (person_1_id);
+
+CREATE INDEX crm_contacts_relationships_person_2_idx ON public.crm_contacts_relationships USING btree (person_2_id);
+
+CREATE INDEX crm_contacts_relationships_type_idx ON public.crm_contacts_relationships USING btree (crm_contacts_relationship_type_id);
+
+CREATE UNIQUE INDEX crm_contacts_relationships_types_default_key ON public.crm_contacts_relationships_types USING btree (lower(type_1), lower(COALESCE(type_2, ''::text))) WHERE (profile_id IS NULL);
+
+CREATE INDEX crm_contacts_relationships_types_profile_idx ON public.crm_contacts_relationships_types USING btree (profile_id);
+
+CREATE UNIQUE INDEX crm_contacts_relationships_types_user_key ON public.crm_contacts_relationships_types USING btree (profile_id, lower(type_1), lower(COALESCE(type_2, ''::text))) WHERE (profile_id IS NOT NULL);
+
+CREATE UNIQUE INDEX crm_deal_contact_unique ON public.crm_deal_and_contact_connections USING btree (crm_deal_id, crm_contact_id);
+
+CREATE UNIQUE INDEX crm_deal_partner_unique ON public.crm_deal_and_partners_connections USING btree (crm_deal_id, crm_partner_id);
+
+CREATE INDEX crm_deal_stages_profile_client_idx ON public.crm_deal_stages USING btree (profile_id, client_type, "position");
+
+CREATE UNIQUE INDEX crm_deal_stages_user_name_key ON public.crm_deal_stages USING btree (profile_id, client_type, name);
+
+CREATE INDEX crm_deals_profile_client_idx ON public.crm_deals USING btree (profile_id, client_type);
+
+CREATE INDEX crm_deals_profile_stage_idx ON public.crm_deals USING btree (profile_id, crm_deal_stage_id, "position");
+
+CREATE INDEX crm_notes_profile_contact_idx ON public.crm_notes USING btree (profile_id, contact_id, created_at DESC);
+
+CREATE INDEX crm_notes_profile_transaction_idx ON public.crm_notes USING btree (profile_id, transaction_id, created_at DESC);
+
+CREATE INDEX crm_partners_profile_type_idx ON public.crm_partners USING btree (profile_id, partner_type, name);
+
+CREATE UNIQUE INDEX crm_pipeline_stages_default_name_key ON public.crm_contact_stages USING btree (name) WHERE (profile_id IS NULL);
+
+CREATE UNIQUE INDEX crm_pipeline_stages_default_position_key ON public.crm_contact_stages USING btree ("position") WHERE (profile_id IS NULL);
+
+CREATE UNIQUE INDEX crm_pipeline_stages_user_name_key ON public.crm_contact_stages USING btree (profile_id, name) WHERE (profile_id IS NOT NULL);
+
+CREATE UNIQUE INDEX crm_pipeline_stages_user_position_key ON public.crm_contact_stages USING btree (profile_id, "position") WHERE (profile_id IS NOT NULL);
+
+CREATE INDEX crm_properties_profile_created_idx ON public.crm_properties USING btree (profile_id, created_at DESC);
+
+CREATE INDEX crm_properties_profile_status_idx ON public.crm_properties USING btree (profile_id, listing_status, updated_at DESC);
+
+CREATE INDEX crm_tasks_profile_contact_idx ON public.crm_tasks USING btree (profile_id, contact_id);
+
+CREATE INDEX crm_tasks_profile_due_idx ON public.crm_tasks USING btree (profile_id, completed_at, due_at);
+
+CREATE INDEX crm_tasks_profile_transaction_idx ON public.crm_tasks USING btree (profile_id, transaction_id);
+
+CREATE INDEX crm_transactions_profile_contact_idx ON public.crm_transactions USING btree (profile_id, contact_id);
+
+CREATE INDEX crm_transactions_profile_property_idx ON public.crm_transactions USING btree (profile_id, property_id);
+
+CREATE INDEX crm_transactions_profile_status_idx ON public.crm_transactions USING btree (profile_id, status, expected_closing_date);
+
+CREATE INDEX google_business_connections_profile_idx ON public.google_business_connections USING btree (profile_id, status);
+
+CREATE INDEX google_business_locations_connection_idx ON public.google_business_locations USING btree (connection_id, is_available, is_selected DESC);
+
+CREATE UNIQUE INDEX google_business_locations_one_selected_per_connection ON public.google_business_locations USING btree (connection_id) WHERE is_selected;
+
+CREATE INDEX google_business_locations_sync_idx ON public.google_business_locations USING btree (sync_status, last_synced_at) WHERE is_available;
+
+CREATE INDEX google_business_metrics_location_date_idx ON public.google_business_metrics USING btree (location_id, metric_date DESC);
+
+CREATE INDEX google_business_reviews_location_time_idx ON public.google_business_reviews USING btree (location_id, provider_created_at DESC NULLS LAST);
+
+CREATE INDEX google_business_search_keywords_location_period_idx ON public.google_business_search_keywords USING btree (location_id, period_end DESC, impressions DESC);
+
+CREATE INDEX images_google_business_location_idx ON public.images USING btree (google_business_location_id, created_at DESC) WHERE (google_business_location_id IS NOT NULL);
+
+CREATE UNIQUE INDEX images_google_business_provider_media_key ON public.images USING btree (google_business_location_id, provider_media_id) WHERE ((google_business_location_id IS NOT NULL) AND (provider_media_id IS NOT NULL));
+
+CREATE UNIQUE INDEX media_post_project_display_order_unique ON public.media USING btree (post_project_id, display_order) WHERE (post_project_id IS NOT NULL);
+
+CREATE INDEX media_post_project_id_idx ON public.media USING btree (post_project_id);
+
+CREATE UNIQUE INDEX media_posting_run_display_order_unique ON public.media USING btree (posting_run_id, display_order) WHERE (posting_run_id IS NOT NULL);
+
+CREATE INDEX media_posting_run_id_idx ON public.media USING btree (posting_run_id);
+
+CREATE UNIQUE INDEX media_schedule_display_order_unique ON public.media USING btree (schedule_id, display_order) WHERE (schedule_id IS NOT NULL);
+
+CREATE INDEX media_schedule_id_idx ON public.media USING btree (schedule_id);
+
+CREATE UNIQUE INDEX media_template_display_order_unique ON public.media USING btree (template_id, display_order) WHERE (template_id IS NOT NULL);
+
+CREATE INDEX media_template_id_idx ON public.media USING btree (template_id);
+
+CREATE UNIQUE INDEX newsletter_audience_contact_uidx ON public.newsletter_audience_contact_connections USING btree (newsletter_audience_id, crm_contact_id) WHERE ((newsletter_audience_id IS NOT NULL) AND (crm_contact_id IS NOT NULL));
+
+CREATE INDEX newsletter_audience_contacts_audience_idx ON public.newsletter_audience_contact_connections USING btree (newsletter_audience_id, crm_contact_id);
+
+CREATE UNIQUE INDEX newsletter_campaign_audience_uidx ON public.newsletter_campaign_audience_connections USING btree (newsletter_campaign_id, newsletter_audience_id) WHERE ((newsletter_campaign_id IS NOT NULL) AND (newsletter_audience_id IS NOT NULL));
+
+CREATE UNIQUE INDEX newsletter_campaigns_email_uidx ON public.newsletter_campaigns USING btree (newsletter_email_id) WHERE (newsletter_email_id IS NOT NULL);
+
+CREATE INDEX newsletter_ses_tenants_retry_idx ON public.newsletter_ses_tenants USING btree (status, next_attempt_at);
+
+CREATE UNIQUE INDEX newsletter_sends_campaign_contact_uidx ON public.newsletter_sends USING btree (newsletter_campaign_id, crm_contact_id) WHERE ((newsletter_campaign_id IS NOT NULL) AND (crm_contact_id IS NOT NULL));
+
+CREATE INDEX newsletter_sends_campaign_cursor_idx ON public.newsletter_sends USING btree (newsletter_campaign_id, created_at, id);
+
+CREATE INDEX newsletter_sends_claim_idx ON public.newsletter_sends USING btree (status, processing_lease_expires_at);
+
+CREATE UNIQUE INDEX newsletter_sends_unsubscribe_token_uidx ON public.newsletter_sends USING btree (unsubscribe_token);
+
+CREATE INDEX pages_website_template_idx ON public.pages USING btree (website_id, template);
+
+CREATE INDEX posting_runs_status_lease_idx ON public.posting_runs USING btree (status, lease_expires_at);
+
+CREATE INDEX properties_website_public_order_idx ON public.properties USING btree (website_id, featured DESC, display_order, created_at) WHERE is_visible;
+
+CREATE UNIQUE INDEX properties_website_slug_unique_lower ON public.properties USING btree (website_id, lower(slug));
+
+CREATE INDEX properties_website_updated_idx ON public.properties USING btree (website_id, updated_at DESC);
+
+CREATE INDEX social_media_assets_profile_created_idx ON public.social_media_assets USING btree (profile_id, created_at DESC, id) WHERE (deleted_at IS NULL);
+
+CREATE INDEX social_media_context_changes_profile_created_idx ON public.social_media_context_changes USING btree (profile_id, created_at DESC, id);
+
+CREATE INDEX social_media_frequency_assets_profile_instruction_idx ON public.social_media_frequency_instruction_assets USING btree (profile_id, frequency_instruction_id);
+
+CREATE INDEX social_media_frequency_profile_created_idx ON public.social_media_frequency_based_instructions USING btree (profile_id, created_at, id);
+
+CREATE INDEX social_media_identity_cities_profile_created_idx ON public.social_media_identities_cities_connections USING btree (profile_id, created_at, id);
+
+CREATE INDEX social_media_note_assets_profile_note_idx ON public.social_media_note_assets USING btree (profile_id, note_id);
+
+CREATE INDEX social_media_note_outcomes_profile_created_idx ON public.social_media_note_outcomes USING btree (profile_id, created_at DESC, id);
+
+CREATE INDEX social_media_note_processing_status_lease_idx ON public.social_media_note_processing USING btree (status, lease_expires_at);
+
+CREATE INDEX social_media_notes_profile_created_idx ON public.social_media_notes USING btree (profile_id, created_at DESC, id);
+
+CREATE INDEX social_media_past_posts_profile_published_idx ON public.social_media_past_posts USING btree (profile_id, published_at DESC, id);
+
+CREATE INDEX social_media_preference_assets_profile_preference_idx ON public.social_media_preference_assets USING btree (profile_id, preference_id);
+
+CREATE INDEX social_media_preferences_profile_created_idx ON public.social_media_preferences USING btree (profile_id, created_at, id);
+
+CREATE INDEX social_media_temp_assets_profile_instruction_idx ON public.social_media_temporary_instruction_assets USING btree (profile_id, temporary_instruction_id);
+
+CREATE INDEX social_media_temporary_profile_created_idx ON public.social_media_temporary_instructions USING btree (profile_id, created_at, id);
+
+CREATE INDEX website_template_settings_website_idx ON public.website_template_settings USING btree (website_id);
+
+CREATE UNIQUE INDEX websites_subdomain_unique_lower ON public.websites USING btree (lower(subdomain)) WHERE (subdomain IS NOT NULL);
+
+CREATE OR REPLACE FUNCTION public.acquire_posting_run(p_schedule_id uuid, p_occurrence_at timestamp with time zone, p_trigger_run_id text, p_zernio_request_id uuid, p_lease_seconds integer DEFAULT 300)
+ RETURNS TABLE(id uuid, schedule_id uuid, occurrence_at timestamp with time zone, trigger_run_id text, status text, template_id uuid, zernio_request_id uuid, zernio_post_id text, media_urls jsonb, acquired boolean)
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+declare
+  v_run public.posting_runs%rowtype;
+begin
+  if p_lease_seconds < 30 or p_lease_seconds > 3600 then
+    raise exception 'p_lease_seconds must be between 30 and 3600';
+  end if;
+
+  insert into public.posting_runs (
+    schedule_id,
+    occurrence_at,
+    trigger_run_id,
+    zernio_request_id
+  )
+  values (
+    p_schedule_id,
+    p_occurrence_at,
+    p_trigger_run_id,
+    p_zernio_request_id
+  )
+  on conflict on constraint posting_runs_schedule_occurrence_key do nothing;
+
+  select pr.*
+  into v_run
+  from public.posting_runs as pr
+  where pr.schedule_id = p_schedule_id
+    and pr.occurrence_at = p_occurrence_at
+  for update;
+
+  if v_run.status = 'published' then
+    return query
+    select
+      v_run.id,
+      v_run.schedule_id,
+      v_run.occurrence_at,
+      v_run.trigger_run_id,
+      v_run.status,
+      v_run.template_id,
+      v_run.zernio_request_id,
+      v_run.zernio_post_id,
+      v_run.media_urls,
+      false;
+    return;
+  end if;
+
+  if v_run.status = 'processing'
+    and v_run.lease_expires_at > now()
+    and v_run.trigger_run_id is distinct from p_trigger_run_id
+  then
+    return query
+    select
+      v_run.id,
+      v_run.schedule_id,
+      v_run.occurrence_at,
+      v_run.trigger_run_id,
+      v_run.status,
+      v_run.template_id,
+      v_run.zernio_request_id,
+      v_run.zernio_post_id,
+      v_run.media_urls,
+      false;
+    return;
+  end if;
+
+  update public.posting_runs as pr
+  set
+    trigger_run_id = p_trigger_run_id,
+    status = 'processing',
+    attempt_count = pr.attempt_count + 1,
+    lease_expires_at = now() + make_interval(secs => p_lease_seconds),
+    updated_at = now(),
+    last_error = null
+  where pr.id = v_run.id
+  returning pr.* into v_run;
+
+  return query
+  select
+    v_run.id,
+    v_run.schedule_id,
+    v_run.occurrence_at,
+    v_run.trigger_run_id,
+    v_run.status,
+    v_run.template_id,
+    v_run.zernio_request_id,
+    v_run.zernio_post_id,
+    v_run.media_urls,
+    true;
+end;
+$function$
+
+
+CREATE OR REPLACE FUNCTION public.finalize_context_user_post(p_posting_run_id uuid)
+ RETURNS boolean
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+declare
+  v_profile_id uuid;
+  v_status text;
+  v_published_at timestamptz;
+  v_history_summary text;
+  v_visual_qa_status text;
+  v_visual_revision_count smallint;
+  v_satisfaction jsonb;
+  v_snapshot jsonb;
+  v_instruction record;
+  v_context_changed boolean := false;
+  v_updated integer;
+begin
+  select s.profile_id, pr.status, pr.published_at, pr.history_summary,
+         pr.visual_qa_status, pr.visual_revision_count,
+         pr.final_temporary_satisfaction, pr.context_snapshot
+  into v_profile_id, v_status, v_published_at, v_history_summary,
+       v_visual_qa_status, v_visual_revision_count, v_satisfaction, v_snapshot
+  from public.posting_runs pr
+  join public.schedules s on s.id = pr.schedule_id
+  where pr.id = p_posting_run_id
+  for update of pr;
+
+  if not found or v_profile_id is null then
+    raise exception 'Posting run or owned schedule was not found';
+  end if;
+  if v_status <> 'published' or v_published_at is null then
+    raise exception 'Posting run is not durably published';
+  end if;
+  if v_visual_qa_status not in ('accepted', 'accepted_with_minor_issues') then
+    raise exception 'Posting run does not have accepted visual QA';
+  end if;
+  if v_history_summary is null or btrim(v_history_summary) = '' then
+    raise exception 'Posting run history summary is missing';
+  end if;
+  if v_satisfaction is null
+     or (v_satisfaction ->> 'visualRevision')::smallint <> v_visual_revision_count then
+    raise exception 'Final temporary satisfaction is missing or stale';
+  end if;
+
+  if exists (
+    select 1 from public.social_media_past_posts
+    where posting_run_id = p_posting_run_id
+  ) then
+    return false;
+  end if;
+
+  perform 1 from public.social_media_context_states
+  where profile_id = v_profile_id for update;
+  if not found then
+    raise exception 'Context state was not found for published profile';
+  end if;
+
+  for v_instruction in
+    select t.id, t.remaining_posts
+    from public.social_media_temporary_instructions t
+    join (
+      select distinct value::uuid as id
+      from jsonb_array_elements_text(v_satisfaction -> 'instructionIds')
+    ) requested on requested.id = t.id
+    where t.profile_id = v_profile_id
+      and t.instruction_type = 'counter'
+      and t.remaining_posts > 0
+      and exists (
+        select 1
+        from jsonb_array_elements(
+          coalesce(v_snapshot -> 'activeTemporaryInstructions', '[]'::jsonb)
+        ) active
+        where active ->> 'id' = t.id::text
+      )
+    order by t.id
+    for update of t
+  loop
+    if v_instruction.remaining_posts = 1 then
+      delete from public.social_media_temporary_instructions
+      where id = v_instruction.id and profile_id = v_profile_id
+        and instruction_type = 'counter' and remaining_posts = 1;
+    else
+      update public.social_media_temporary_instructions
+      set remaining_posts = remaining_posts - 1, updated_at = now()
+      where id = v_instruction.id and profile_id = v_profile_id
+        and instruction_type = 'counter'
+        and remaining_posts = v_instruction.remaining_posts;
+    end if;
+    get diagnostics v_updated = row_count;
+    if v_updated = 1 then v_context_changed := true; end if;
+  end loop;
+
+  if v_context_changed then
+    update public.social_media_context_states
+    set revision = revision + 1, updated_at = now()
+    where profile_id = v_profile_id;
+    get diagnostics v_updated = row_count;
+    if v_updated <> 1 then
+      raise exception 'Context state was not found for published profile';
+    end if;
+  end if;
+
+  insert into public.social_media_past_posts
+    (profile_id, posting_run_id, published_at, summary)
+  values (v_profile_id, p_posting_run_id, v_published_at, v_history_summary);
+
+  return true;
+end
+$function$
+
+
+CREATE OR REPLACE FUNCTION public.is_google_business_connection_owner(target_connection_id uuid)
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+  select exists (
+    select 1 from public.google_business_connections
+    where id = target_connection_id and profile_id = (select auth.uid())
+  );
+$function$
+
+
+CREATE OR REPLACE FUNCTION public.is_google_business_location_owner(target_location_id uuid)
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+  select exists (
+    select 1
+    from public.google_business_locations as location
+    join public.google_business_connections as connection on connection.id = location.connection_id
+    where location.id = target_location_id and connection.profile_id = (select auth.uid())
+  );
+$function$
+
+
+CREATE OR REPLACE FUNCTION public.is_website_owner(target_website_id uuid)
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+  select exists (
+    select 1
+    from public.websites
+    where id = target_website_id
+      and profile_id = (select auth.uid())
+  );
+$function$
+
+
+CREATE OR REPLACE FUNCTION public.newsletter_campaign_sending_context(p_campaign_ids uuid[])
+ RETURNS TABLE(campaign_id uuid, from_email text, reply_to_email text, tenant_name text, configuration_set_name text)
+ LANGUAGE sql
+ SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+  select
+    campaign.id,
+    identity.from_email,
+    identity.reply_to_email,
+    tenant.tenant_name,
+    tenant.configuration_set_name
+  from public.newsletter_campaigns campaign
+  join public.newsletter_sending_identities identity
+    on identity.profile_id = campaign.profile_id
+   and (campaign.newsletter_sending_identity_id is null
+     or campaign.newsletter_sending_identity_id = identity.id)
+  join public.newsletter_ses_tenants tenant
+    on tenant.profile_id = campaign.profile_id
+   and (campaign.newsletter_ses_tenant_id is null
+     or campaign.newsletter_ses_tenant_id = tenant.id)
+  where campaign.id = any(p_campaign_ids)
+    and identity.status = 'ready'
+    and identity.verification_status = 'SUCCESS'
+    and identity.reply_to_verified_at is not null
+    and tenant.status = 'ready';
+$function$;
+
+CREATE OR REPLACE FUNCTION public.newsletter_claim_sends(p_items jsonb, p_claim_token uuid, p_lease_seconds integer DEFAULT 300)
+ RETURNS TABLE(disposition text, send_id uuid, campaign_id uuid, email_address text, subject_line text, preview_text text, from_name text, from_email text, email_content jsonb, unsubscribe_token uuid, attempt_count integer)
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+declare
+  v_item jsonb;
+  v_send public.newsletter_sends%rowtype;
+  v_campaign record;
+  v_contact_status text;
+begin
+  if jsonb_typeof(p_items) <> 'array' then
+    raise exception 'p_items must be a JSON array';
+  end if;
+  if p_lease_seconds < 30 or p_lease_seconds > 900 then
+    raise exception 'lease seconds out of range';
+  end if;
+
+  -- Deterministic lock ordering avoids deadlocks when duplicate SQS deliveries
+  -- put overlapping sends into two concurrent Lambda batches.
+  for v_item in
+    select value
+    from jsonb_array_elements(p_items)
+    order by value->>'campaignId', value->>'newsletterSendId'
+  loop
+    disposition := null;
+    send_id := (v_item->>'newsletterSendId')::uuid;
+    campaign_id := (v_item->>'campaignId')::uuid;
+    email_address := null;
+    subject_line := null;
+    preview_text := null;
+    from_name := null;
+    from_email := null;
+    email_content := null;
+    unsubscribe_token := null;
+    attempt_count := null;
+
+    select * into v_send
+    from public.newsletter_sends s
+    where s.id = send_id
+    for update;
+
+    if not found then
+      disposition := 'not_found';
+      return next;
+      continue;
+    end if;
+    if v_send.newsletter_campaign_id is distinct from campaign_id then
+      disposition := 'campaign_mismatch';
+      return next;
+      continue;
+    end if;
+    if v_send.status in ('sent', 'failed', 'cancelled', 'suppressed', 'uncertain') then
+      disposition := 'terminal';
+      return next;
+      continue;
+    end if;
+
+    select c.*, e.content as email_content
+      into v_campaign
+    from public.newsletter_campaigns c
+    join public.newsletter_emails e on e.id = c.newsletter_email_id
+    where c.id = campaign_id;
+
+    if not found then
+      disposition := 'not_found';
+      return next;
+      continue;
+    end if;
+
+    if v_campaign.status in ('cancelled', 'failed') then
+      update public.newsletter_sends
+      set status = 'cancelled', failed_at = now(), last_error = 'Campaign cancelled before send'
+      where id = send_id;
+      update public.newsletter_campaigns
+      set terminal_send_count = terminal_send_count + 1,
+          cancelled_count = cancelled_count + 1
+      where id = campaign_id;
+      disposition := 'terminal';
+      return next;
+      continue;
+    end if;
+
+    select c.email_marketing_status into v_contact_status
+    from public.crm_contacts c
+    where c.id = v_send.crm_contact_id
+      and c.profile_id = v_campaign.profile_id;
+
+    if v_contact_status is distinct from 'subscribed' then
+      update public.newsletter_sends
+      set status = 'suppressed', failed_at = now(), last_error = 'Recipient is not eligible for marketing email'
+      where id = send_id;
+      update public.newsletter_campaigns
+      set terminal_send_count = terminal_send_count + 1,
+          suppressed_count = suppressed_count + 1
+      where id = campaign_id;
+      update public.newsletter_campaigns
+      set status = 'completed', completed_at = coalesce(completed_at, now())
+      where id = campaign_id
+        and status <> 'cancelled'
+        and total_send_count > 0
+        and terminal_send_count >= total_send_count;
+      disposition := 'terminal';
+      return next;
+      continue;
+    end if;
+
+    if v_send.status = 'sending' and v_send.processing_lease_expires_at > now() then
+      disposition := 'busy';
+      return next;
+      continue;
+    end if;
+
+    if v_send.status = 'sending'
+       and v_send.processing_lease_expires_at <= now()
+       and v_send.ses_request_started_at is not null then
+      update public.newsletter_sends
+      set status = 'uncertain',
+          failed_at = now(),
+          last_error = 'SES request may have been accepted before the worker stopped; manual review required',
+          processing_claim_token = null,
+          processing_lease_expires_at = null
+      where id = send_id;
+      update public.newsletter_campaigns
+      set terminal_send_count = terminal_send_count + 1,
+          uncertain_count = uncertain_count + 1
+      where id = campaign_id;
+      update public.newsletter_campaigns
+      set status = 'completed', completed_at = coalesce(completed_at, now())
+      where id = campaign_id
+        and status <> 'cancelled'
+        and total_send_count > 0
+        and terminal_send_count >= total_send_count;
+      disposition := 'terminal';
+      return next;
+      continue;
+    end if;
+
+    update public.newsletter_sends
+    set status = 'sending',
+        processing_started_at = now(),
+        processing_lease_expires_at = now() + make_interval(secs => p_lease_seconds),
+        processing_claim_token = p_claim_token,
+        ses_request_started_at = null,
+        last_attempt_at = now(),
+        attempt_count = newsletter_sends.attempt_count + 1,
+        last_error = null
+    where id = send_id
+    returning newsletter_sends.* into v_send;
+
+    update public.newsletter_campaigns
+    set status = case when status in ('queued', 'dispatching') then 'sending' else status end
+    where id = campaign_id;
+
+    disposition := 'claimed';
+    email_address := v_send.email_address;
+    subject_line := v_campaign.subject_line;
+    preview_text := v_campaign.preview_text;
+    from_name := v_campaign.from_name;
+    from_email := v_campaign.from_email;
+    email_content := v_campaign.email_content;
+    unsubscribe_token := v_send.unsubscribe_token;
+    attempt_count := v_send.attempt_count;
+    return next;
+  end loop;
+end;
+$function$
+
+
+CREATE OR REPLACE FUNCTION public.newsletter_complete_sends(p_results jsonb, p_claim_token uuid)
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+declare
+  v_result jsonb;
+  v_send public.newsletter_sends%rowtype;
+  v_outcome text;
+  v_error text;
+begin
+  if jsonb_typeof(p_results) <> 'array' then
+    raise exception 'p_results must be a JSON array';
+  end if;
+
+  for v_result in select value from jsonb_array_elements(p_results)
+  loop
+    select * into v_send
+    from public.newsletter_sends
+    where id = (v_result->>'newsletterSendId')::uuid
+      and status = 'sending'
+      and processing_claim_token = p_claim_token
+    for update;
+
+    if not found then
+      continue;
+    end if;
+
+    v_outcome := v_result->>'outcome';
+    v_error := left(coalesce(v_result->>'error', ''), 2000);
+
+    if v_outcome = 'sent' then
+      update public.newsletter_sends
+      set status = 'sent',
+          sent_at = now(),
+          ses_message_id = left(v_result->>'sesMessageId', 255),
+          last_error = null,
+          processing_claim_token = null,
+          processing_lease_expires_at = null
+      where id = v_send.id;
+      update public.newsletter_campaigns
+      set terminal_send_count = terminal_send_count + 1,
+          sent_count = sent_count + 1
+      where id = v_send.newsletter_campaign_id;
+    elsif v_outcome = 'retry' then
+      update public.newsletter_sends
+      set status = 'pending',
+          last_error = v_error,
+          ses_request_started_at = null,
+          processing_claim_token = null,
+          processing_lease_expires_at = null
+      where id = v_send.id;
+    elsif v_outcome = 'uncertain' then
+      update public.newsletter_sends
+      set status = 'uncertain',
+          failed_at = now(),
+          last_error = v_error,
+          processing_claim_token = null,
+          processing_lease_expires_at = null
+      where id = v_send.id;
+      update public.newsletter_campaigns
+      set terminal_send_count = terminal_send_count + 1,
+          uncertain_count = uncertain_count + 1
+      where id = v_send.newsletter_campaign_id;
+    else
+      update public.newsletter_sends
+      set status = 'failed',
+          failed_at = now(),
+          last_error = v_error,
+          ses_request_started_at = null,
+          processing_claim_token = null,
+          processing_lease_expires_at = null
+      where id = v_send.id;
+      update public.newsletter_campaigns
+      set terminal_send_count = terminal_send_count + 1,
+          failed_count = failed_count + 1
+      where id = v_send.newsletter_campaign_id;
+    end if;
+
+    update public.newsletter_campaigns
+    set status = 'completed', completed_at = coalesce(completed_at, now())
+    where id = v_send.newsletter_campaign_id
+      and status <> 'cancelled'
+      and total_send_count > 0
+      and terminal_send_count >= total_send_count;
+  end loop;
+end;
+$function$
+
+
+CREATE OR REPLACE FUNCTION public.newsletter_mark_ses_request_started(p_send_id uuid, p_claim_token uuid)
+ RETURNS boolean
+ LANGUAGE sql
+ SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+  update public.newsletter_sends
+  set ses_request_started_at = now()
+  where id = p_send_id
+    and status = 'sending'
+    and processing_claim_token = p_claim_token
+    and processing_lease_expires_at > now()
+  returning true;
+$function$
+
+
+CREATE OR REPLACE FUNCTION public.newsletter_prepare_campaign(p_campaign_id uuid)
+ RETURNS TABLE(prepared boolean, send_count integer)
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+declare
+  v_campaign public.newsletter_campaigns%rowtype;
+  v_count integer;
+begin
+  perform pg_advisory_xact_lock(hashtextextended(p_campaign_id::text, 0));
+
+  select * into v_campaign
+  from public.newsletter_campaigns
+  where id = p_campaign_id
+  for update;
+
+  if not found then
+    raise exception 'newsletter campaign not found';
+  end if;
+  if v_campaign.status = 'cancelled' then
+    raise exception 'newsletter campaign is cancelled';
+  end if;
+  if v_campaign.recipient_preparation_status = 'prepared' then
+    return query select true, v_campaign.total_send_count;
+    return;
+  end if;
+
+  update public.newsletter_campaigns
+  set recipient_preparation_status = 'preparing',
+      recipient_preparation_started_at = coalesce(recipient_preparation_started_at, now()),
+      status = 'preparing',
+      last_error = null
+  where id = p_campaign_id;
+
+  insert into public.newsletter_sends (
+    newsletter_campaign_id,
+    crm_contact_id,
+    email_address,
+    status
+  )
+  select distinct on (lower(btrim(c.email)))
+    p_campaign_id,
+    c.id,
+    btrim(c.email),
+    'pending'
+  from public.newsletter_campaign_audience_connections cac
+  join public.newsletter_audiences a
+    on a.id = cac.newsletter_audience_id
+   and a.profile_id = v_campaign.profile_id
+  join public.newsletter_audience_contact_connections acc
+    on acc.newsletter_audience_id = a.id
+  join public.crm_contacts c
+    on c.id = acc.crm_contact_id
+   and c.profile_id = v_campaign.profile_id
+  where cac.newsletter_campaign_id = p_campaign_id
+    and c.email is not null
+    and btrim(c.email) <> ''
+    and c.email_marketing_status = 'subscribed'
+  order by lower(btrim(c.email)), c.id
+  on conflict do nothing;
+
+  select count(*)::integer into v_count
+  from public.newsletter_sends
+  where newsletter_campaign_id = p_campaign_id;
+
+  update public.newsletter_campaigns
+  set recipient_preparation_status = 'prepared',
+      recipient_prepared_at = now(),
+      total_send_count = v_count,
+      status = case when v_count = 0 then 'completed' else 'dispatching' end,
+      completed_at = case when v_count = 0 then now() else completed_at end
+  where id = p_campaign_id;
+
+  return query select true, v_count;
+end;
+$function$
+
+
+CREATE OR REPLACE FUNCTION public.reject_social_media_append_only_mutation()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SET search_path TO 'pg_catalog'
+AS $function$
+begin
+  raise exception '% is append-only', tg_table_name using errcode = '55000';
+end;
+$function$
+
+
+CREATE OR REPLACE FUNCTION public.seed_crm_deal_stages(target_profile_id uuid)
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+begin
+  insert into public.crm_deal_stages (profile_id, name, client_type, color, position)
+  values
+    (target_profile_id, 'Buyer Contract', 'buyer', '#ea580c', 0),
+    (target_profile_id, 'Offer', 'buyer', '#1961ed', 1),
+    (target_profile_id, 'Pending', 'buyer', '#ca8a04', 2),
+    (target_profile_id, 'Closed', 'buyer', '#16a34a', 3),
+    (target_profile_id, 'Listed', 'seller', '#ea580c', 0),
+    (target_profile_id, 'Offer', 'seller', '#1961ed', 1),
+    (target_profile_id, 'Pending', 'seller', '#ca8a04', 2),
+    (target_profile_id, 'Closed', 'seller', '#16a34a', 3)
+  on conflict (profile_id, client_type, name) do nothing;
+end;
+$function$
+
+
+CREATE OR REPLACE FUNCTION public.seed_crm_deal_stages_for_new_profile()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+begin
+  perform public.seed_crm_deal_stages(new.id);
+  return new;
+end;
+$function$
+
+
+CREATE OR REPLACE FUNCTION public.set_crm_updated_at()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SET search_path TO 'public'
+AS $function$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$function$
+
+
+CREATE OR REPLACE FUNCTION public.set_google_business_updated_at()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SET search_path TO ''
+AS $function$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$function$
+
+
+CREATE OR REPLACE FUNCTION public.set_property_updated_at()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SET search_path TO ''
+AS $function$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$function$
+
+
+CREATE OR REPLACE FUNCTION public.set_website_template_settings_updated_at()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SET search_path TO ''
+AS $function$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$function$
+
+
+CREATE OR REPLACE FUNCTION public.website_blog_posts_are_public(target_website_id uuid)
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+  select exists (
+    select 1
+      from public.websites
+     where id = target_website_id
+       and blog_posts_enabled
+  );
+$function$
+
+
+CREATE OR REPLACE FUNCTION public.website_properties_are_public(target_website_id uuid)
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+  select exists (
+    select 1
+    from public.websites
+    where id = target_website_id
+      and properties_enabled
+  );
+$function$
+
+
+CREATE TRIGGER seed_crm_deal_stages_after_profile_insert AFTER INSERT ON profiles FOR EACH ROW EXECUTE FUNCTION seed_crm_deal_stages_for_new_profile();
+
+CREATE TRIGGER set_crm_contact_stages_updated_at BEFORE UPDATE ON crm_contact_stages FOR EACH ROW EXECUTE FUNCTION set_crm_updated_at();
+
+CREATE TRIGGER set_crm_contacts_updated_at BEFORE UPDATE ON crm_contacts FOR EACH ROW EXECUTE FUNCTION set_crm_updated_at();
+
+CREATE TRIGGER set_crm_deal_stages_updated_at BEFORE UPDATE ON crm_deal_stages FOR EACH ROW EXECUTE FUNCTION set_crm_updated_at();
+
+CREATE TRIGGER set_crm_deals_updated_at BEFORE UPDATE ON crm_deals FOR EACH ROW EXECUTE FUNCTION set_crm_updated_at();
+
+CREATE TRIGGER set_crm_notes_updated_at BEFORE UPDATE ON crm_notes FOR EACH ROW EXECUTE FUNCTION set_crm_updated_at();
+
+CREATE TRIGGER set_crm_partners_updated_at BEFORE UPDATE ON crm_partners FOR EACH ROW EXECUTE FUNCTION set_crm_updated_at();
+
+CREATE TRIGGER set_crm_properties_updated_at BEFORE UPDATE ON crm_properties FOR EACH ROW EXECUTE FUNCTION set_crm_updated_at();
+
+CREATE TRIGGER set_crm_tags_updated_at BEFORE UPDATE ON crm_tags FOR EACH ROW EXECUTE FUNCTION set_crm_updated_at();
+
+CREATE TRIGGER set_crm_tasks_updated_at BEFORE UPDATE ON crm_tasks FOR EACH ROW EXECUTE FUNCTION set_crm_updated_at();
+
+CREATE TRIGGER set_crm_transactions_updated_at BEFORE UPDATE ON crm_transactions FOR EACH ROW EXECUTE FUNCTION set_crm_updated_at();
+
+CREATE TRIGGER set_google_business_connections_updated_at BEFORE UPDATE ON google_business_connections FOR EACH ROW EXECUTE FUNCTION set_google_business_updated_at();
+
+CREATE TRIGGER set_google_business_locations_updated_at BEFORE UPDATE ON google_business_locations FOR EACH ROW EXECUTE FUNCTION set_google_business_updated_at();
+
+CREATE TRIGGER set_google_business_metrics_updated_at BEFORE UPDATE ON google_business_metrics FOR EACH ROW EXECUTE FUNCTION set_google_business_updated_at();
+
+CREATE TRIGGER set_google_business_reviews_updated_at BEFORE UPDATE ON google_business_reviews FOR EACH ROW EXECUTE FUNCTION set_google_business_updated_at();
+
+CREATE TRIGGER set_google_business_search_keywords_updated_at BEFORE UPDATE ON google_business_search_keywords FOR EACH ROW EXECUTE FUNCTION set_google_business_updated_at();
+
+CREATE TRIGGER set_property_updated_at BEFORE UPDATE ON properties FOR EACH ROW EXECUTE FUNCTION set_property_updated_at();
+
+CREATE TRIGGER set_website_template_settings_updated_at BEFORE UPDATE ON website_template_settings FOR EACH ROW EXECUTE FUNCTION set_website_template_settings_updated_at();
+
+CREATE TRIGGER social_media_context_changes_append_only BEFORE DELETE OR UPDATE ON social_media_context_changes FOR EACH ROW EXECUTE FUNCTION reject_social_media_append_only_mutation();
+
+CREATE TRIGGER social_media_note_outcomes_append_only BEFORE DELETE OR UPDATE ON social_media_note_outcomes FOR EACH ROW EXECUTE FUNCTION reject_social_media_append_only_mutation();
+
+CREATE TRIGGER social_media_notes_append_only BEFORE DELETE OR UPDATE ON social_media_notes FOR EACH ROW EXECUTE FUNCTION reject_social_media_append_only_mutation();
+
+ALTER TABLE public.blog_posts ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.crm_activities ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.crm_contact_stages ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.crm_contact_tags ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.crm_contacts ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.crm_contacts_relationships ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.crm_contacts_relationships_types ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.crm_deal_and_contact_connections ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.crm_deal_and_partners_connections ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.crm_deal_stages ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.crm_deals ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.crm_notes ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.crm_partners ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.crm_properties ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.crm_tags ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.crm_tasks ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.crm_transactions ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.google_business_connections ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.google_business_locations ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.google_business_metrics ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.google_business_reviews ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.google_business_search_keywords ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.google_business_webhook_events ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.images ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.media ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.newsletter_audience_contact_connections ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.newsletter_audiences ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.newsletter_campaign_audience_connections ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.newsletter_campaigns ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.newsletter_emails ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.newsletter_sends ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.newsletter_ses_tenants ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.newsletter_sending_identities ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.newsletter_templates ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.pages ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.post_projects ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.posting_runs ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.properties ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.schedules ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.social_media_assets ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.social_media_cities ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.social_media_context_changes ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.social_media_context_states ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.social_media_frequency_based_instructions ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.social_media_frequency_instruction_assets ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.social_media_identities ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.social_media_identities_cities_connections ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.social_media_note_assets ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.social_media_note_outcomes ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.social_media_note_processing ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.social_media_notes ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.social_media_past_posts ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.social_media_preference_assets ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.social_media_preferences ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.social_media_schedules ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.social_media_temporary_instruction_assets ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.social_media_temporary_instructions ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.templates ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.website_template_settings ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.websites ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY blog_posts_owner_delete ON public.blog_posts AS PERMISSIVE FOR DELETE TO authenticated USING (is_website_owner(website_id));
+
+CREATE POLICY blog_posts_owner_insert ON public.blog_posts AS PERMISSIVE FOR INSERT TO authenticated WITH CHECK (is_website_owner(website_id));
+
+CREATE POLICY blog_posts_owner_read ON public.blog_posts AS PERMISSIVE FOR SELECT TO authenticated USING (is_website_owner(website_id));
+
+CREATE POLICY blog_posts_owner_update ON public.blog_posts AS PERMISSIVE FOR UPDATE TO authenticated USING (is_website_owner(website_id)) WITH CHECK (is_website_owner(website_id));
+
+CREATE POLICY blog_posts_public_read ON public.blog_posts AS PERMISSIVE FOR SELECT TO anon, authenticated USING (((COALESCE(title, ''::text) <> ''::text) AND website_blog_posts_are_public(website_id)));
+
+CREATE POLICY crm_activities_owner_all ON public.crm_activities AS PERMISSIVE FOR ALL TO authenticated USING ((profile_id = ( SELECT auth.uid() AS uid))) WITH CHECK ((profile_id = ( SELECT auth.uid() AS uid)));
+
+CREATE POLICY crm_contact_stages_delete ON public.crm_contact_stages AS PERMISSIVE FOR DELETE TO authenticated USING ((profile_id = ( SELECT auth.uid() AS uid)));
+
+CREATE POLICY crm_contact_stages_insert ON public.crm_contact_stages AS PERMISSIVE FOR INSERT TO authenticated WITH CHECK ((profile_id = ( SELECT auth.uid() AS uid)));
+
+CREATE POLICY crm_contact_stages_select ON public.crm_contact_stages AS PERMISSIVE FOR SELECT TO authenticated USING (((profile_id IS NULL) OR (profile_id = ( SELECT auth.uid() AS uid))));
+
+CREATE POLICY crm_contact_stages_update ON public.crm_contact_stages AS PERMISSIVE FOR UPDATE TO authenticated USING ((profile_id = ( SELECT auth.uid() AS uid))) WITH CHECK ((profile_id = ( SELECT auth.uid() AS uid)));
+
+CREATE POLICY crm_contact_tags_owner_all ON public.crm_contact_tags AS PERMISSIVE FOR ALL TO authenticated USING ((profile_id = ( SELECT auth.uid() AS uid))) WITH CHECK ((profile_id = ( SELECT auth.uid() AS uid)));
+
+CREATE POLICY crm_contacts_owner_all ON public.crm_contacts AS PERMISSIVE FOR ALL TO authenticated USING ((profile_id = ( SELECT auth.uid() AS uid))) WITH CHECK ((profile_id = ( SELECT auth.uid() AS uid)));
+
+CREATE POLICY crm_contacts_relationships_delete ON public.crm_contacts_relationships AS PERMISSIVE FOR DELETE TO authenticated USING (((EXISTS ( SELECT 1
+   FROM crm_contacts p1
+  WHERE ((p1.id = crm_contacts_relationships.person_1_id) AND (p1.profile_id = ( SELECT auth.uid() AS uid))))) AND (EXISTS ( SELECT 1
+   FROM crm_contacts p2
+  WHERE ((p2.id = crm_contacts_relationships.person_2_id) AND (p2.profile_id = ( SELECT auth.uid() AS uid)))))));
+
+CREATE POLICY crm_contacts_relationships_insert ON public.crm_contacts_relationships AS PERMISSIVE FOR INSERT TO authenticated WITH CHECK (((EXISTS ( SELECT 1
+   FROM crm_contacts p1
+  WHERE ((p1.id = crm_contacts_relationships.person_1_id) AND (p1.profile_id = ( SELECT auth.uid() AS uid))))) AND (EXISTS ( SELECT 1
+   FROM crm_contacts p2
+  WHERE ((p2.id = crm_contacts_relationships.person_2_id) AND (p2.profile_id = ( SELECT auth.uid() AS uid)))))));
+
+CREATE POLICY crm_contacts_relationships_select ON public.crm_contacts_relationships AS PERMISSIVE FOR SELECT TO authenticated USING (((EXISTS ( SELECT 1
+   FROM crm_contacts p1
+  WHERE ((p1.id = crm_contacts_relationships.person_1_id) AND (p1.profile_id = ( SELECT auth.uid() AS uid))))) AND (EXISTS ( SELECT 1
+   FROM crm_contacts p2
+  WHERE ((p2.id = crm_contacts_relationships.person_2_id) AND (p2.profile_id = ( SELECT auth.uid() AS uid)))))));
+
+CREATE POLICY crm_contacts_relationships_types_delete ON public.crm_contacts_relationships_types AS PERMISSIVE FOR DELETE TO authenticated USING ((profile_id = ( SELECT auth.uid() AS uid)));
+
+CREATE POLICY crm_contacts_relationships_types_insert ON public.crm_contacts_relationships_types AS PERMISSIVE FOR INSERT TO authenticated WITH CHECK ((profile_id = ( SELECT auth.uid() AS uid)));
+
+CREATE POLICY crm_contacts_relationships_types_select ON public.crm_contacts_relationships_types AS PERMISSIVE FOR SELECT TO authenticated USING (((profile_id IS NULL) OR (profile_id = ( SELECT auth.uid() AS uid))));
+
+CREATE POLICY crm_contacts_relationships_types_update ON public.crm_contacts_relationships_types AS PERMISSIVE FOR UPDATE TO authenticated USING ((profile_id = ( SELECT auth.uid() AS uid))) WITH CHECK ((profile_id = ( SELECT auth.uid() AS uid)));
+
+CREATE POLICY crm_contacts_relationships_update ON public.crm_contacts_relationships AS PERMISSIVE FOR UPDATE TO authenticated USING (((EXISTS ( SELECT 1
+   FROM crm_contacts p1
+  WHERE ((p1.id = crm_contacts_relationships.person_1_id) AND (p1.profile_id = ( SELECT auth.uid() AS uid))))) AND (EXISTS ( SELECT 1
+   FROM crm_contacts p2
+  WHERE ((p2.id = crm_contacts_relationships.person_2_id) AND (p2.profile_id = ( SELECT auth.uid() AS uid))))))) WITH CHECK (((EXISTS ( SELECT 1
+   FROM crm_contacts p1
+  WHERE ((p1.id = crm_contacts_relationships.person_1_id) AND (p1.profile_id = ( SELECT auth.uid() AS uid))))) AND (EXISTS ( SELECT 1
+   FROM crm_contacts p2
+  WHERE ((p2.id = crm_contacts_relationships.person_2_id) AND (p2.profile_id = ( SELECT auth.uid() AS uid)))))));
+
+CREATE POLICY crm_deal_contact_connections_owner_all ON public.crm_deal_and_contact_connections AS PERMISSIVE FOR ALL TO authenticated USING ((EXISTS ( SELECT 1
+   FROM crm_deals d
+  WHERE ((d.id = crm_deal_and_contact_connections.crm_deal_id) AND (d.profile_id = ( SELECT auth.uid() AS uid)))))) WITH CHECK (((EXISTS ( SELECT 1
+   FROM crm_deals d
+  WHERE ((d.id = crm_deal_and_contact_connections.crm_deal_id) AND (d.profile_id = ( SELECT auth.uid() AS uid))))) AND (EXISTS ( SELECT 1
+   FROM crm_contacts c
+  WHERE ((c.id = crm_deal_and_contact_connections.crm_contact_id) AND (c.profile_id = ( SELECT auth.uid() AS uid)))))));
+
+CREATE POLICY crm_deal_partner_connections_owner_all ON public.crm_deal_and_partners_connections AS PERMISSIVE FOR ALL TO authenticated USING ((EXISTS ( SELECT 1
+   FROM crm_deals d
+  WHERE ((d.id = crm_deal_and_partners_connections.crm_deal_id) AND (d.profile_id = ( SELECT auth.uid() AS uid)))))) WITH CHECK (((EXISTS ( SELECT 1
+   FROM crm_deals d
+  WHERE ((d.id = crm_deal_and_partners_connections.crm_deal_id) AND (d.profile_id = ( SELECT auth.uid() AS uid))))) AND (EXISTS ( SELECT 1
+   FROM crm_partners p
+  WHERE ((p.id = crm_deal_and_partners_connections.crm_partner_id) AND (p.profile_id = ( SELECT auth.uid() AS uid)))))));
+
+CREATE POLICY crm_deal_stages_owner_all ON public.crm_deal_stages AS PERMISSIVE FOR ALL TO authenticated USING ((profile_id = ( SELECT auth.uid() AS uid))) WITH CHECK ((profile_id = ( SELECT auth.uid() AS uid)));
+
+CREATE POLICY crm_deals_owner_all ON public.crm_deals AS PERMISSIVE FOR ALL TO authenticated USING ((profile_id = ( SELECT auth.uid() AS uid))) WITH CHECK ((profile_id = ( SELECT auth.uid() AS uid)));
+
+CREATE POLICY crm_notes_owner_all ON public.crm_notes AS PERMISSIVE FOR ALL TO authenticated USING ((profile_id = ( SELECT auth.uid() AS uid))) WITH CHECK ((profile_id = ( SELECT auth.uid() AS uid)));
+
+CREATE POLICY crm_partners_owner_all ON public.crm_partners AS PERMISSIVE FOR ALL TO authenticated USING ((profile_id = ( SELECT auth.uid() AS uid))) WITH CHECK ((profile_id = ( SELECT auth.uid() AS uid)));
+
+CREATE POLICY crm_properties_owner_all ON public.crm_properties AS PERMISSIVE FOR ALL TO authenticated USING ((profile_id = ( SELECT auth.uid() AS uid))) WITH CHECK ((profile_id = ( SELECT auth.uid() AS uid)));
+
+CREATE POLICY crm_tags_owner_all ON public.crm_tags AS PERMISSIVE FOR ALL TO authenticated USING ((profile_id = ( SELECT auth.uid() AS uid))) WITH CHECK ((profile_id = ( SELECT auth.uid() AS uid)));
+
+CREATE POLICY crm_tasks_owner_all ON public.crm_tasks AS PERMISSIVE FOR ALL TO authenticated USING ((profile_id = ( SELECT auth.uid() AS uid))) WITH CHECK ((profile_id = ( SELECT auth.uid() AS uid)));
+
+CREATE POLICY crm_transactions_owner_all ON public.crm_transactions AS PERMISSIVE FOR ALL TO authenticated USING ((profile_id = ( SELECT auth.uid() AS uid))) WITH CHECK ((profile_id = ( SELECT auth.uid() AS uid)));
+
+CREATE POLICY google_business_connections_owner_read ON public.google_business_connections AS PERMISSIVE FOR SELECT TO authenticated USING ((profile_id = ( SELECT auth.uid() AS uid)));
+
+CREATE POLICY google_business_images_owner_read ON public.images AS PERMISSIVE FOR SELECT TO authenticated USING (((google_business_location_id IS NOT NULL) AND is_google_business_location_owner(google_business_location_id)));
+
+CREATE POLICY google_business_keywords_owner_read ON public.google_business_search_keywords AS PERMISSIVE FOR SELECT TO authenticated USING (is_google_business_location_owner(location_id));
+
+CREATE POLICY google_business_locations_owner_read ON public.google_business_locations AS PERMISSIVE FOR SELECT TO authenticated USING (is_google_business_connection_owner(connection_id));
+
+CREATE POLICY google_business_metrics_owner_read ON public.google_business_metrics AS PERMISSIVE FOR SELECT TO authenticated USING (is_google_business_location_owner(location_id));
+
+CREATE POLICY google_business_reviews_owner_read ON public.google_business_reviews AS PERMISSIVE FOR SELECT TO authenticated USING (is_google_business_location_owner(location_id));
+
+CREATE POLICY postpooch_worker_delete_posting_run_media ON public.media AS PERMISSIVE FOR DELETE TO postpooch_worker USING ((posting_run_id IS NOT NULL));
+
+CREATE POLICY postpooch_worker_delete_schedules ON public.schedules AS PERMISSIVE FOR DELETE TO postpooch_worker USING (true);
+
+CREATE POLICY postpooch_worker_insert_posting_run_media ON public.media AS PERMISSIVE FOR INSERT TO postpooch_worker WITH CHECK (((posting_run_id IS NOT NULL) AND (schedule_id IS NULL) AND (template_id IS NULL) AND (post_project_id IS NULL) AND (EXISTS ( SELECT 1
+   FROM posting_runs pr
+  WHERE (pr.id = media.posting_run_id)))));
+
+CREATE POLICY postpooch_worker_insert_posting_runs ON public.posting_runs AS PERMISSIVE FOR INSERT TO postpooch_worker WITH CHECK (true);
+
+CREATE POLICY postpooch_worker_select_assets ON public.social_media_assets AS PERMISSIVE FOR SELECT TO postpooch_worker USING (true);
+
+CREATE POLICY postpooch_worker_select_context_states ON public.social_media_context_states AS PERMISSIVE FOR SELECT TO postpooch_worker USING (true);
+
+CREATE POLICY postpooch_worker_select_frequency ON public.social_media_frequency_based_instructions AS PERMISSIVE FOR SELECT TO postpooch_worker USING (true);
+
+CREATE POLICY postpooch_worker_select_frequency_assets ON public.social_media_frequency_instruction_assets AS PERMISSIVE FOR SELECT TO postpooch_worker USING (true);
+
+CREATE POLICY postpooch_worker_select_identities ON public.social_media_identities AS PERMISSIVE FOR SELECT TO postpooch_worker USING (true);
+
+CREATE POLICY postpooch_worker_select_identity_cities ON public.social_media_identities_cities_connections AS PERMISSIVE FOR SELECT TO postpooch_worker USING (true);
+
+CREATE POLICY postpooch_worker_select_media ON public.media AS PERMISSIVE FOR SELECT TO postpooch_worker USING (true);
+
+CREATE POLICY postpooch_worker_select_newsletter_campaigns ON public.newsletter_campaigns AS PERMISSIVE FOR SELECT TO postpooch_worker USING (true);
+
+CREATE POLICY postpooch_worker_select_newsletter_sends ON public.newsletter_sends AS PERMISSIVE FOR SELECT TO postpooch_worker USING (true);
+
+CREATE POLICY worker_manage_newsletter_ses_tenants ON public.newsletter_ses_tenants AS PERMISSIVE FOR ALL TO postpooch_worker USING (true) WITH CHECK (true);
+
+CREATE POLICY worker_manage_newsletter_sending_identities ON public.newsletter_sending_identities AS PERMISSIVE FOR ALL TO postpooch_worker USING (true) WITH CHECK (true);
+
+CREATE POLICY profiles_read_own_newsletter_ses_tenant ON public.newsletter_ses_tenants AS PERMISSIVE FOR SELECT TO authenticated USING (profile_id = ( SELECT auth.uid() AS uid));
+
+CREATE POLICY profiles_read_own_newsletter_sending_identity ON public.newsletter_sending_identities AS PERMISSIVE FOR SELECT TO authenticated USING (profile_id = ( SELECT auth.uid() AS uid));
+
+CREATE POLICY postpooch_worker_select_past_posts ON public.social_media_past_posts AS PERMISSIVE FOR SELECT TO postpooch_worker USING (true);
+
+CREATE POLICY postpooch_worker_select_posting_runs ON public.posting_runs AS PERMISSIVE FOR SELECT TO postpooch_worker USING (true);
+
+CREATE POLICY postpooch_worker_select_preference_assets ON public.social_media_preference_assets AS PERMISSIVE FOR SELECT TO postpooch_worker USING (true);
+
+CREATE POLICY postpooch_worker_select_preferences ON public.social_media_preferences AS PERMISSIVE FOR SELECT TO postpooch_worker USING (true);
+
+CREATE POLICY postpooch_worker_select_schedules ON public.schedules AS PERMISSIVE FOR SELECT TO postpooch_worker USING (true);
+
+CREATE POLICY postpooch_worker_select_social_cities ON public.social_media_cities AS PERMISSIVE FOR SELECT TO postpooch_worker USING (true);
+
+CREATE POLICY postpooch_worker_select_temp_assets ON public.social_media_temporary_instruction_assets AS PERMISSIVE FOR SELECT TO postpooch_worker USING (true);
+
+CREATE POLICY postpooch_worker_select_templates ON public.templates AS PERMISSIVE FOR SELECT TO postpooch_worker USING (true);
+
+CREATE POLICY postpooch_worker_select_temporary ON public.social_media_temporary_instructions AS PERMISSIVE FOR SELECT TO postpooch_worker USING (true);
+
+CREATE POLICY postpooch_worker_update_newsletter_campaigns ON public.newsletter_campaigns AS PERMISSIVE FOR UPDATE TO postpooch_worker USING (true) WITH CHECK (true);
+
+CREATE POLICY postpooch_worker_update_newsletter_sends ON public.newsletter_sends AS PERMISSIVE FOR UPDATE TO postpooch_worker USING (true) WITH CHECK (true);
+
+CREATE POLICY postpooch_worker_update_posting_run_media ON public.media AS PERMISSIVE FOR UPDATE TO postpooch_worker USING ((posting_run_id IS NOT NULL)) WITH CHECK (((posting_run_id IS NOT NULL) AND (schedule_id IS NULL) AND (template_id IS NULL) AND (post_project_id IS NULL)));
+
+CREATE POLICY postpooch_worker_update_posting_runs ON public.posting_runs AS PERMISSIVE FOR UPDATE TO postpooch_worker USING (true) WITH CHECK (true);
+
+CREATE POLICY properties_owner_delete ON public.properties AS PERMISSIVE FOR DELETE TO authenticated USING (is_website_owner(website_id));
+
+CREATE POLICY properties_owner_insert ON public.properties AS PERMISSIVE FOR INSERT TO authenticated WITH CHECK (is_website_owner(website_id));
+
+CREATE POLICY properties_owner_read ON public.properties AS PERMISSIVE FOR SELECT TO authenticated USING (is_website_owner(website_id));
+
+CREATE POLICY properties_owner_update ON public.properties AS PERMISSIVE FOR UPDATE TO authenticated USING (is_website_owner(website_id)) WITH CHECK (is_website_owner(website_id));
+
+CREATE POLICY properties_public_read ON public.properties AS PERMISSIVE FOR SELECT TO anon, authenticated USING ((is_visible AND website_properties_are_public(website_id)));
+
+CREATE POLICY website_template_settings_owner_delete ON public.website_template_settings AS PERMISSIVE FOR DELETE TO authenticated USING (is_website_owner(website_id));
+
+CREATE POLICY website_template_settings_owner_insert ON public.website_template_settings AS PERMISSIVE FOR INSERT TO authenticated WITH CHECK (is_website_owner(website_id));
+
+CREATE POLICY website_template_settings_owner_read ON public.website_template_settings AS PERMISSIVE FOR SELECT TO authenticated USING (is_website_owner(website_id));
+
+CREATE POLICY website_template_settings_owner_update ON public.website_template_settings AS PERMISSIVE FOR UPDATE TO authenticated USING (is_website_owner(website_id)) WITH CHECK (is_website_owner(website_id));

@@ -1,0 +1,4 @@
+export async function renderToMjml() {
+  return "<mjml><mj-body><mj-section><mj-column><mj-text>Hello</mj-text></mj-column></mj-section></mj-body></mjml>";
+}
+

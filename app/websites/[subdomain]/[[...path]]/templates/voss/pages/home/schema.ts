@@ -1,0 +1,108 @@
+import { z } from "zod";
+
+const StatSchema = z.object({
+  value: z.string(),
+  label: z.string(),
+});
+
+export const VossHomeContentSchema = z.object({
+  heroEyebrow: z.string(),
+  heroTitleLine1: z.string(),
+  heroTitleEmphasis: z.string(),
+  heroDeck: z.string(),
+  heroCtaLabel: z.string(),
+  heroCtaHref: z.string(),
+  heroImage: z.string(),
+  heroIndexLeft: z.string(),
+  heroIndexRight: z.string(),
+  introEyebrow: z.string(),
+  introTitleLine1: z.string(),
+  introTitleEmphasis: z.string(),
+  introBody: z.string(),
+  introCtaLabel: z.string(),
+  introCtaHref: z.string(),
+  featuredEyebrow: z.string(),
+  featuredTitle: z.string(),
+  featuredCtaLabel: z.string(),
+  featuredCtaHref: z.string(),
+  manifestoWord: z.string(),
+  manifestoImage: z.string(),
+  manifestoEyebrow: z.string(),
+  manifestoTitleLine1: z.string(),
+  manifestoTitleLine2: z.string(),
+  manifestoBody: z.string(),
+  manifestoCtaLabel: z.string(),
+  manifestoCtaHref: z.string(),
+  numbersEyebrow: z.string(),
+  numbersTitleLine1: z.string(),
+  numbersTitleEmphasis: z.string(),
+  stats: z.array(StatSchema).min(1),
+  statsDisclaimer: z.string(),
+  neighborhoodsEyebrow: z.string(),
+  neighborhoodsTitleLine1: z.string(),
+  neighborhoodsTitleEmphasis: z.string(),
+  neighborhoodsDeck: z.string(),
+  quoteBefore: z.string(),
+  quoteEmphasis: z.string(),
+  quoteAfter: z.string(),
+  quoteSource: z.string(),
+  quoteNote: z.string(),
+});
+
+export type VossHomeContent = z.infer<typeof VossHomeContentSchema>;
+
+export const vossHomeDefaultContent: VossHomeContent = {
+  heroEyebrow: "New York · Private Representation",
+  heroTitleLine1: "Homes with a",
+  heroTitleEmphasis: "point of view.",
+  heroDeck:
+    "Strategic real estate guidance for people who want more than access. They want taste, leverage, and a clear read on what matters.",
+  heroCtaLabel: "Explore residences",
+  heroCtaHref: "/properties",
+  heroImage:
+    "https://pub-7c19c2bd664343ff99e9f2c4903fb73f.r2.dev/websites/template-defaults/52/52113291e8bad628bf5142b3413a48dfce3fdfad15d0f9dd10d00a1fc9746335.avif",
+  heroIndexLeft: "MV",
+  heroIndexRight: "01 / 06",
+  introEyebrow: "The practice",
+  introTitleLine1: "Real estate is personal.",
+  introTitleEmphasis: "The process should be precise.",
+  introBody:
+    "Mara Voss represents buyers and sellers across Manhattan and Brooklyn with a deliberately small, high-touch practice. Every search is edited. Every listing has a strategy. Every recommendation is made with the long view in mind.",
+  introCtaLabel: "Meet Mara",
+  introCtaHref: "/about",
+  featuredEyebrow: "Selected residences",
+  featuredTitle: "Worth a closer look.",
+  featuredCtaLabel: "View all properties",
+  featuredCtaHref: "/properties",
+  manifestoWord: "SELECTIVE",
+  manifestoImage:
+    "https://pub-7c19c2bd664343ff99e9f2c4903fb73f.r2.dev/websites/template-defaults/4c/4c8c466ac07848a12a30ddd61dbfff4dfd0b9c276c07a122257cc8ed41ca6839.avif",
+  manifestoEyebrow: "A smaller book. Better work.",
+  manifestoTitleLine1: "Fewer clients.",
+  manifestoTitleLine2: "More attention.",
+  manifestoBody:
+    "The best representation is not volume-driven. Mara limits her active client roster so the work can stay direct, responsive, and deeply informed.",
+  manifestoCtaLabel: "Work together",
+  manifestoCtaHref: "/contact",
+  numbersEyebrow: "Experience, distilled",
+  numbersTitleLine1: "The numbers matter.",
+  numbersTitleEmphasis: "Judgment matters more.",
+  stats: [
+    { value: "$280M+", label: "Career sales volume*" },
+    { value: "14", label: "Years advising NYC clients*" },
+    { value: "79%", label: "Business from referrals*" },
+    { value: "1", label: "Point of contact: Mara" },
+  ],
+  statsDisclaimer:
+    "*Placeholder marketing figures for this demo. Replace with the agent's verified statistics before publishing.",
+  neighborhoodsEyebrow: "Neighborhood intelligence",
+  neighborhoodsTitleLine1: "Where you live changes",
+  neighborhoodsTitleEmphasis: "how you live.",
+  neighborhoodsDeck:
+    "Not a directory. A short list of places Mara knows block by block, building by building, and sometimes line by line.",
+  quoteBefore: "Mara never made us feel sold to. She made us feel",
+  quoteEmphasis: "well advised",
+  quoteAfter: "— including twice when she told us to walk away.",
+  quoteSource: "Buyer · Tribeca to West Village",
+  quoteNote: "Client testimonial placeholder",
+};

@@ -1,0 +1,3 @@
+The mascot source was supplied by the user. This package makes no representation
+about copyright, trademark, licensing, or commercial-usage rights. Confirm ownership
+and usage rights before public or commercial release.

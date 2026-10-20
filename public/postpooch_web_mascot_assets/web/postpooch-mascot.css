@@ -1,0 +1,18 @@
+.postpooch-mascot {
+  display: block;
+  width: min(100%, 24rem);
+  height: auto;
+  object-fit: contain;
+}
+
+.postpooch-mascot--hero {
+  width: clamp(12rem, 32vw, 32rem);
+}
+
+.postpooch-mascot--avatar {
+  width: 3rem;
+  aspect-ratio: 1;
+  border-radius: 50%;
+}
+
+/* Preserve the approved artwork. Do not recolor it with CSS filters. */

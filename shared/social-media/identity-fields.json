@@ -1,0 +1,11 @@
+[
+  {"key":"display_name","label":"Name","valueType":"text","storage":{"kind":"column","column":"display_name"},"nullable":true,"mutableFromNotes":true,"minLength":1,"maxLength":120},
+  {"key":"professional_title","label":"Professional title","valueType":"text","storage":{"kind":"column","column":"professional_title"},"nullable":true,"mutableFromNotes":true,"minLength":1,"maxLength":120},
+  {"key":"brokerage_name","label":"Brokerage or team","valueType":"text","storage":{"kind":"column","column":"brokerage_name"},"nullable":true,"mutableFromNotes":true,"minLength":1,"maxLength":160},
+  {"key":"markets","label":"Markets served","valueType":"city_relation","storage":{"kind":"relation","table":"social_media_identities_cities_connections"},"nullable":false,"mutableFromNotes":true,"maxItems":20},
+  {"key":"target_audience","label":"Target audience","valueType":"text","storage":{"kind":"column","column":"target_audience"},"nullable":true,"mutableFromNotes":true,"minLength":1,"maxLength":1000},
+  {"key":"specialties","label":"Specialties","valueType":"text_array","storage":{"kind":"column","column":"specialties"},"nullable":false,"mutableFromNotes":true,"minItems":0,"maxItems":20,"itemMinLength":1,"itemMaxLength":80},
+  {"key":"personal_context","label":"Personal context","valueType":"text","storage":{"kind":"column","column":"personal_context"},"nullable":true,"mutableFromNotes":true,"minLength":1,"maxLength":2000},
+  {"key":"primary_brand_color","label":"Primary brand color","valueType":"hex_color","storage":{"kind":"column","column":"primary_brand_color"},"nullable":true,"mutableFromNotes":true,"maxLength":7},
+  {"key":"secondary_brand_color","label":"Secondary brand color","valueType":"hex_color","storage":{"kind":"column","column":"secondary_brand_color"},"nullable":true,"mutableFromNotes":true,"maxLength":7}
+]

@@ -1,0 +1,65 @@
+{
+  "experiment": "M: Jev-only explicit non-adoption vs legitimate proposal benchmark",
+  "objective": "Compare frozen Combined J, Temporary-only relevance variant M and three-category relevance variant N, without downstream agent",
+  "question_maps": {
+    "J": "13 unchanged Combined J questions",
+    "M": "13; only Temporary false criterion extends",
+    "N": "13; Temporary, Preference, Frequency false criteria extend"
+  },
+  "model": "jev-latest",
+  "thresholds": {
+    "include": 0.75,
+    "exclude": 0.25,
+    "temporary_type": 0.7
+  },
+  "counts": {
+    "fresh": 288,
+    "fresh_high": 216,
+    "fresh_interpretive": 72,
+    "replays": 24,
+    "total": 312,
+    "fresh_groups": 24,
+    "notes_per_group": 12,
+    "quotePairs": 36,
+    "arms": 3,
+    "repeats": 3,
+    "attempts": 2808
+  },
+  "goldCategoryPositivesFresh": {
+    "temporary": 111,
+    "preference": 87,
+    "frequency": 75,
+    "identity": 39
+  },
+  "goldTemporaryTypesFresh": {
+    "counter": 54,
+    "date_range": 53,
+    "unclear": 4
+  },
+  "goldConfidenceLabelNote": "pre-registered interpretive positive quote/advice, reported separately",
+  "requests": {
+    "state_keys": [
+      "note"
+    ],
+    "retries": 0,
+    "timeout_seconds": 8,
+    "rotation": "arms[(caseIndex + repeatIndex + position) % 3]",
+    "persistence": "append-only temp JSONL; idempotency key caseId/arm/repeat"
+  },
+  "knownCombinedJsha256": "e10d8e72a2c40625318dcfc24584f5923b90725817f71dd3f042513fe7ba5ad0",
+  "sha256": {
+    "CODEX-EVALUATION.md": "913a88ddb5d1694309e9e188b9194fc790374b58c562496c8f3a4f7f7caa91a3",
+    "README.md": "48806be28449aaab485a0efaedc69784fc4bc28503143bce11fc4d94366af7eb",
+    "SCORING-RUBRIC.md": "a5ef768197b8e245410b93ce59ae3810228da8358c82ee65a440f8a78d3b1d67",
+    "candidate-relevance-m-n.ts": "1398e7f5d4ed758c2f1cd7c4d4def05b2703c366cbad4365abd895ecfd25891b",
+    "postpooch-combined-classifier-j.ts": "e10d8e72a2c40625318dcfc24584f5923b90725817f71dd3f042513fe7ba5ad0",
+    "relevance-holdout-m.json": "59be19f749e22d738ea59f4e9544fcc1a458c545913478c3aebde55b8ae99100",
+    "relevance-holdout-m.ts": "97df5bebab1d4f2cf4d51c4737fdaf7c80f6339a8b68bb60bc713328ce6637b3",
+    "validate-benchmark.mjs": "15b256f32c5f6f8cf93dda0756ac496ae6ac698696d3d81cc6f5597ba0ac2a9e"
+  },
+  "limitations": [
+    "synthetic adversarial sample",
+    "interpretive subset not definitive action truth",
+    "only Jev category routing, not second agent nor responses to empty route"
+  ]
+}

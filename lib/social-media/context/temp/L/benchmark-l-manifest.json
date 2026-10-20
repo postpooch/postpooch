@@ -1,0 +1,62 @@
+{
+  "experiment": "L: intent-aware Jev-only benchmark",
+  "purpose": "Compare existing V7, J, K using corrected category relevance labels; never invoke second agent",
+  "arms": [
+    "Version 7 (5 questions)",
+    "Combined J (13 questions)",
+    "Combined J + Candidate K Preference (13 questions)"
+  ],
+  "model": "jev-latest",
+  "thresholds": {
+    "include": 0.75,
+    "exclude": 0.25,
+    "temporary_type": 0.7
+  },
+  "count": {
+    "fresh": 264,
+    "diagnostic_replay": 24,
+    "total": 288,
+    "fresh_groups": 22,
+    "group_size": 12,
+    "fresh_high": 216,
+    "fresh_interpretive": 48,
+    "paired_contrasts": 12,
+    "arms": 3,
+    "repetitions": 3,
+    "attempts": 2592
+  },
+  "gold_category_positives_fresh": {
+    "identity": 83,
+    "preference": 90,
+    "frequency": 63,
+    "temporary": 97
+  },
+  "requests": {
+    "retries": 0,
+    "timeout_seconds": 8,
+    "input_state_keys": [
+      "note"
+    ],
+    "repeat_order": "rotate by (caseIndex + repeatIndex) % 3"
+  },
+  "sha256": {
+    "CODEX-EVALUATION.md": "fe8501d57a8ba1b71549d7fb963f1f922446322e5f804fb968a35a9025787930",
+    "README.md": "201ae441b3c7e96d322bae8fea2d3c1125fd121df2522cf3a4dd048414eb0df4",
+    "SCORING-RUBRIC.md": "ea9c281f608460815fcae5a68a9f097b3d6652874ec2f82dc79a01f34af1be49",
+    "classification-policy.ts": "75d669d23e2dba187ea67142a3992780a379e59e1fb24d69a2849c3312b9a4c5",
+    "postpooch-combined-classifier-j.ts": "e10d8e72a2c40625318dcfc24584f5923b90725817f71dd3f042513fe7ba5ad0",
+    "postpooch-jev-intent-holdout-l.json": "93c9dbdea31ab9b4914f3a08401dc4c7f607b4a92041483e1e66be55f3c4d52e",
+    "postpooch-jev-intent-holdout-l.ts": "2d5500fad3b05c42776c399af0ea240d620103afe2c9f8396c986d73283d06b0",
+    "preference-jev-candidate-k.ts": "6613bb38cd0d7a41950dcb0273e2c2b1ca9f78de171f33da1fd90a75f400e913"
+  },
+  "known_source_sha256": {
+    "classification-policy.ts": "75d669d23e2dba187ea67142a3992780a379e59e1fb24d69a2849c3312b9a4c5",
+    "postpooch-combined-classifier-j.ts": "e10d8e72a2c40625318dcfc24584f5923b90725817f71dd3f042513fe7ba5ad0",
+    "preference-jev-candidate-k.ts": "6613bb38cd0d7a41950dcb0273e2c2b1ca9f78de171f33da1fd90a75f400e913"
+  },
+  "limitations": [
+    "synthetic balanced sample, not estimated production note distribution",
+    "gold labels for quotes/advice have interpretive subset",
+    "does not evaluate actual second-agent decision or app response to empty route"
+  ]
+}

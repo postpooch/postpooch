@@ -1,0 +1,521 @@
+{
+  "package": "Postpooch exact mascot web asset kit",
+  "source_sha256": "d6b63fb8c52988a13c77a619a1f52ab51ca4cbe58f0c85fc1c10343158439d53",
+  "generative_redraw_used": false,
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 2639,
+      "sha256": "bab364c59fc001bba838556a88b1f39f5ea0264778dfc7a4655aab7991dd6522"
+    },
+    {
+      "path": "SOURCE-RIGHTS-NOTE.txt",
+      "bytes": 220,
+      "sha256": "0f1ffb7fcd2761b1bfe6b3e6c0b2bb54a5d0ce448c16dde8e409521e793756d1"
+    },
+    {
+      "path": "avatar/apple-touch-icon.png",
+      "bytes": 38713,
+      "sha256": "42d034fb7c4d6844ca82c2ff2e5c4e081e90d4cd5945f78f8f570136fe3fcf61",
+      "dimensions": [
+        180,
+        180
+      ],
+      "mode": "RGBA",
+      "format": "PNG"
+    },
+    {
+      "path": "avatar/favicon-16.png",
+      "bytes": 911,
+      "sha256": "6f3b68e95e26b6832ce82af2df078ce1eb960e07a7c5e61195aac548c9c9018d",
+      "dimensions": [
+        16,
+        16
+      ],
+      "mode": "RGBA",
+      "format": "PNG"
+    },
+    {
+      "path": "avatar/favicon-32.png",
+      "bytes": 2755,
+      "sha256": "e43ae808255fd769cc5b81937dbdab80029efb5f0b3634595702b1856f96ba4f",
+      "dimensions": [
+        32,
+        32
+      ],
+      "mode": "RGBA",
+      "format": "PNG"
+    },
+    {
+      "path": "avatar/favicon-48.png",
+      "bytes": 5151,
+      "sha256": "43d2dc94e87bb76a9ecb0c4c8e84c4a66c082d7cd8126e5836dbea3bf59eb388",
+      "dimensions": [
+        48,
+        48
+      ],
+      "mode": "RGBA",
+      "format": "PNG"
+    },
+    {
+      "path": "avatar/favicon.ico",
+      "bytes": 933,
+      "sha256": "3cec9d3d98e8b964f92a16cfaf1571dea6ea98df6964027f932f44bbf35b97b3",
+      "dimensions": [
+        16,
+        16
+      ],
+      "mode": "RGBA",
+      "format": "ICO"
+    },
+    {
+      "path": "avatar/postpooch-avatar-cream-512.png",
+      "bytes": 139451,
+      "sha256": "e4812584ba3daa4d78325676b51c1e03be835af03fbf4f91851664d052e0c799",
+      "dimensions": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "format": "PNG"
+    },
+    {
+      "path": "avatar/postpooch-avatar-cream-512.webp",
+      "bytes": 85220,
+      "sha256": "299ef5852fe3efebcf30e9c603f05eadcebf686893057196d91eb24acc353e37",
+      "dimensions": [
+        512,
+        512
+      ],
+      "mode": "RGB",
+      "format": "WEBP"
+    },
+    {
+      "path": "avatar/postpooch-avatar-transparent-512.png",
+      "bytes": 163372,
+      "sha256": "b9ecc8e8a44404769e3f7596245f5dc556c6168e3993cd62d20ee397acacfd41",
+      "dimensions": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "format": "PNG"
+    },
+    {
+      "path": "avatar/postpooch-avatar-transparent-512.webp",
+      "bytes": 107196,
+      "sha256": "a8309df1e44b01686e074e94ea1bdb75b952afa91e6e6234c1606b75e35c7d13",
+      "dimensions": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "format": "WEBP"
+    },
+    {
+      "path": "avatar/postpooch-pwa-192.png",
+      "bytes": 42360,
+      "sha256": "2c753d6aa5b8fa72872f42840a178a2a27586749baf9f5a496883680bbcc5807",
+      "dimensions": [
+        192,
+        192
+      ],
+      "mode": "RGBA",
+      "format": "PNG"
+    },
+    {
+      "path": "avatar/postpooch-pwa-512.png",
+      "bytes": 139451,
+      "sha256": "e4812584ba3daa4d78325676b51c1e03be835af03fbf4f91851664d052e0c799",
+      "dimensions": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "format": "PNG"
+    },
+    {
+      "path": "avatar/site.webmanifest",
+      "bytes": 432,
+      "sha256": "032a40a85a8c5a55ab1880b8cc1d82ad6841b29ab7e1252b54bb9acbdc2ab1eb"
+    },
+    {
+      "path": "master/postpooch-mascot-full-canvas-transparent.png",
+      "bytes": 638670,
+      "sha256": "30f09f054bddfe31ec153a3c7dadd1839279c4444186268782501e9c11cd2e4d",
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "format": "PNG"
+    },
+    {
+      "path": "master/postpooch-mascot-full-canvas-transparent.webp",
+      "bytes": 416790,
+      "sha256": "e718e4e27cc29788cc95b5713f3c17c30cf61b44807266d64719211b60bf4132",
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "format": "WEBP"
+    },
+    {
+      "path": "master/postpooch-mascot-full-canvas-with-shadow.png",
+      "bytes": 650733,
+      "sha256": "2abff874f991b207da9a100bb89d67041590a9ce7fd0c967f5949c1328c57ede",
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "format": "PNG"
+    },
+    {
+      "path": "master/postpooch-mascot-full-canvas-with-shadow.webp",
+      "bytes": 424982,
+      "sha256": "ab0207fb869e15dd4347f4b5ceb1c8b46f3bbb88efa808e37bbb1ed7e80bbf07",
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "format": "WEBP"
+    },
+    {
+      "path": "master/postpooch-mascot-transparent-safe.png",
+      "bytes": 611519,
+      "sha256": "cf92fbcebc0d2a4229b8508770cec9cc7a54be5225b02a89770b539886eb04ff",
+      "dimensions": [
+        822,
+        838
+      ],
+      "mode": "RGBA",
+      "format": "PNG"
+    },
+    {
+      "path": "master/postpooch-mascot-transparent-safe.webp",
+      "bytes": 410012,
+      "sha256": "0d27be6ac631be06215d7becb3c2c6be64b25cad878ea0a868d62239305786ca",
+      "dimensions": [
+        822,
+        838
+      ],
+      "mode": "RGBA",
+      "format": "WEBP"
+    },
+    {
+      "path": "master/postpooch-mascot-transparent.png",
+      "bytes": 608656,
+      "sha256": "b01a70245b6201e336420888bb29e0e756bafc2b6412ce46162e1eb30b1f730c",
+      "dimensions": [
+        790,
+        806
+      ],
+      "mode": "RGBA",
+      "format": "PNG"
+    },
+    {
+      "path": "master/postpooch-mascot-transparent.webp",
+      "bytes": 404668,
+      "sha256": "86687f86d87b54cdfdd2f7b4410b8cb510ba5eae32577fadc10d3d5ab1601983",
+      "dimensions": [
+        790,
+        806
+      ],
+      "mode": "RGBA",
+      "format": "WEBP"
+    },
+    {
+      "path": "master/postpooch-mascot-with-shadow-safe.png",
+      "bytes": 622669,
+      "sha256": "066de51449311ac1eaf8a991aa3a533b9e42adc870c7a373b418123d672cb470",
+      "dimensions": [
+        822,
+        867
+      ],
+      "mode": "RGBA",
+      "format": "PNG"
+    },
+    {
+      "path": "master/postpooch-mascot-with-shadow-safe.webp",
+      "bytes": 417684,
+      "sha256": "e979f8edc86f76e87a558fd2fdfdfcb59ab53edf8a8120d0c548c8f1a285f059",
+      "dimensions": [
+        822,
+        867
+      ],
+      "mode": "RGBA",
+      "format": "WEBP"
+    },
+    {
+      "path": "master/postpooch-mascot-with-shadow.png",
+      "bytes": 619657,
+      "sha256": "c8a31399652a9f4899a3d49a91710326e6a6edf295d81acba079af53dc82fc72",
+      "dimensions": [
+        790,
+        835
+      ],
+      "mode": "RGBA",
+      "format": "PNG"
+    },
+    {
+      "path": "master/postpooch-mascot-with-shadow.webp",
+      "bytes": 417948,
+      "sha256": "05ee53ec0b5695b4c45acb9ecff99ae6a8955d3de39b3520382983080fc1374a",
+      "dimensions": [
+        790,
+        835
+      ],
+      "mode": "RGBA",
+      "format": "WEBP"
+    },
+    {
+      "path": "preview/postpooch-mascot-preview.png",
+      "bytes": 614434,
+      "sha256": "250626485d03d608cb10f4abe5141c611f6a2313484831f0cde1742649222cde",
+      "dimensions": [
+        1800,
+        1160
+      ],
+      "mode": "RGB",
+      "format": "PNG"
+    },
+    {
+      "path": "responsive/transparent/png/postpooch-mascot-transparent-128w.png",
+      "bytes": 27370,
+      "sha256": "bf392c25ae3fdc1749c6eda43c543622d61a9e13c29eafd7b66615657d9979b7",
+      "dimensions": [
+        128,
+        131
+      ],
+      "mode": "RGBA",
+      "format": "PNG"
+    },
+    {
+      "path": "responsive/transparent/png/postpooch-mascot-transparent-256w.png",
+      "bytes": 88431,
+      "sha256": "423daef6f25ad770a608584c38f0e3909b746a8d7a33d02ab23105f19ad39a92",
+      "dimensions": [
+        256,
+        261
+      ],
+      "mode": "RGBA",
+      "format": "PNG"
+    },
+    {
+      "path": "responsive/transparent/png/postpooch-mascot-transparent-512w.png",
+      "bytes": 296788,
+      "sha256": "4b26133f98a26597d7eaced7bf08e1af42c0641a62b22aa1b075e42139b7c148",
+      "dimensions": [
+        512,
+        522
+      ],
+      "mode": "RGBA",
+      "format": "PNG"
+    },
+    {
+      "path": "responsive/transparent/png/postpooch-mascot-transparent-64w.png",
+      "bytes": 8533,
+      "sha256": "5aaa23873c9e217bdaa36509fbaebb1409b2b102bd90c8486c7f11175e67676a",
+      "dimensions": [
+        64,
+        65
+      ],
+      "mode": "RGBA",
+      "format": "PNG"
+    },
+    {
+      "path": "responsive/transparent/png/postpooch-mascot-transparent-790w.png",
+      "bytes": 608656,
+      "sha256": "b01a70245b6201e336420888bb29e0e756bafc2b6412ce46162e1eb30b1f730c",
+      "dimensions": [
+        790,
+        806
+      ],
+      "mode": "RGBA",
+      "format": "PNG"
+    },
+    {
+      "path": "responsive/transparent/webp/postpooch-mascot-transparent-128w.webp",
+      "bytes": 17816,
+      "sha256": "161d6dbfa151ca8c1f8a66c43423c5265ffab1f6195a8f2c6eb4d740c726db8c",
+      "dimensions": [
+        128,
+        131
+      ],
+      "mode": "RGBA",
+      "format": "WEBP"
+    },
+    {
+      "path": "responsive/transparent/webp/postpooch-mascot-transparent-256w.webp",
+      "bytes": 56534,
+      "sha256": "aa873b506f444c00aee55275b129d70d64a97ea81cca4b86e7384988efad51a6",
+      "dimensions": [
+        256,
+        261
+      ],
+      "mode": "RGBA",
+      "format": "WEBP"
+    },
+    {
+      "path": "responsive/transparent/webp/postpooch-mascot-transparent-512w.webp",
+      "bytes": 198128,
+      "sha256": "f8e7d0f582ba1ddb02a089fa73780e03891e83ec0071144ea8a5c194ec452db2",
+      "dimensions": [
+        512,
+        522
+      ],
+      "mode": "RGBA",
+      "format": "WEBP"
+    },
+    {
+      "path": "responsive/transparent/webp/postpooch-mascot-transparent-64w.webp",
+      "bytes": 6102,
+      "sha256": "612092ffb542b51c3bbc4367eeb559e2dd4a76d17dcf3e80270641ae7cc73bec",
+      "dimensions": [
+        64,
+        65
+      ],
+      "mode": "RGBA",
+      "format": "WEBP"
+    },
+    {
+      "path": "responsive/transparent/webp/postpooch-mascot-transparent-790w.webp",
+      "bytes": 404668,
+      "sha256": "86687f86d87b54cdfdd2f7b4410b8cb510ba5eae32577fadc10d3d5ab1601983",
+      "dimensions": [
+        790,
+        806
+      ],
+      "mode": "RGBA",
+      "format": "WEBP"
+    },
+    {
+      "path": "responsive/with-shadow/png/postpooch-mascot-with-shadow-128w.png",
+      "bytes": 27815,
+      "sha256": "bd93d25ab978bb23dbfcc59f3f53f171a33c053521a5cba0de508cb2e5b30f23",
+      "dimensions": [
+        128,
+        135
+      ],
+      "mode": "RGBA",
+      "format": "PNG"
+    },
+    {
+      "path": "responsive/with-shadow/png/postpooch-mascot-with-shadow-256w.png",
+      "bytes": 90179,
+      "sha256": "3ca6b15e54966bd8d5112568972b736067fb39941dd3b170b9fd6bb9df06a8fe",
+      "dimensions": [
+        256,
+        271
+      ],
+      "mode": "RGBA",
+      "format": "PNG"
+    },
+    {
+      "path": "responsive/with-shadow/png/postpooch-mascot-with-shadow-512w.png",
+      "bytes": 302475,
+      "sha256": "1bfd1f06407b7d3c3ec4cf671857073982bd284f8f6e696c30c353574984c8a8",
+      "dimensions": [
+        512,
+        541
+      ],
+      "mode": "RGBA",
+      "format": "PNG"
+    },
+    {
+      "path": "responsive/with-shadow/png/postpooch-mascot-with-shadow-64w.png",
+      "bytes": 8877,
+      "sha256": "b00dfed4b116ae52414c27dba912a897474340c7ed97c2ad1cde5354a7bac7ca",
+      "dimensions": [
+        64,
+        68
+      ],
+      "mode": "RGBA",
+      "format": "PNG"
+    },
+    {
+      "path": "responsive/with-shadow/png/postpooch-mascot-with-shadow-790w.png",
+      "bytes": 647375,
+      "sha256": "4258696883db22719b62dda010e5a11c00f44958e6b41ce65f14ffe118369034",
+      "dimensions": [
+        790,
+        835
+      ],
+      "mode": "RGBA",
+      "format": "PNG"
+    },
+    {
+      "path": "responsive/with-shadow/webp/postpooch-mascot-with-shadow-128w.webp",
+      "bytes": 18244,
+      "sha256": "90a8a45d8bfca4e2f642afda697cfe774421a43ae51136cd631128d25eec3ae8",
+      "dimensions": [
+        128,
+        135
+      ],
+      "mode": "RGBA",
+      "format": "WEBP"
+    },
+    {
+      "path": "responsive/with-shadow/webp/postpooch-mascot-with-shadow-256w.webp",
+      "bytes": 57836,
+      "sha256": "00ff21b0d237f932c96721ffea3e473da5186e8d92cf317071794af673b62da5",
+      "dimensions": [
+        256,
+        271
+      ],
+      "mode": "RGBA",
+      "format": "WEBP"
+    },
+    {
+      "path": "responsive/with-shadow/webp/postpooch-mascot-with-shadow-512w.webp",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "responsive/with-shadow/webp/postpooch-mascot-with-shadow-64w.webp",
+      "bytes": 6336,
+      "sha256": "d0b4ce73762f50a80e1af99ed60a435d87df2b7ac66c35fda073966249f078c6",
+      "dimensions": [
+        64,
+        68
+      ],
+      "mode": "RGBA",
+      "format": "WEBP"
+    },
+    {
+      "path": "responsive/with-shadow/webp/postpooch-mascot-with-shadow-790w.webp",
+      "bytes": 429640,
+      "sha256": "93675935a6c35ee0c1c9b41eb20efdbed4a893b8a28a40300037717e516d7776",
+      "dimensions": [
+        790,
+        835
+      ],
+      "mode": "RGBA",
+      "format": "WEBP"
+    },
+    {
+      "path": "source/postpooch-mascot-original.png",
+      "bytes": 1772701,
+      "sha256": "d6b63fb8c52988a13c77a619a1f52ab51ca4cbe58f0c85fc1c10343158439d53",
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "format": "PNG"
+    },
+    {
+      "path": "web/example.html",
+      "bytes": 1684,
+      "sha256": "6214968903d3d8cf038bbdadbf137f2126e6711a8ec2e9b7897a47dac8a6ae8f"
+    },
+    {
+      "path": "web/postpooch-mascot.css",
+      "bytes": 332,
+      "sha256": "6e731bf05920bb5cb009e8307e141da48de09f97db20a25f324353ce78d9fc2b"
+    }
+  ]
+}

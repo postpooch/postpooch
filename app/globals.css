@@ -1,0 +1,388 @@
+@import "tailwindcss";
+
+/* Postpooch brand design tokens — keep in sync with postpooch_master_ai_prompt.md §13 */
+:root {
+  --pp-ink: #241914;
+  --pp-bark: #6f3f26;
+  --pp-cocoa: #9b5c35;
+  --pp-caramel: #c9824f;
+  --pp-peach: #f6b177;
+  --pp-cream: #fff7ef;
+  --pp-sand: #ead9c8;
+  --pp-mist: #f5f2ef;
+  --pp-stone: #746c67;
+  --pp-teal: #256f68;
+  --pp-teal-dark: #1e5a55;
+  --pp-blue: #356f8f;
+  --pp-coral: #b9483a;
+  --pp-white: #ffffff;
+
+  --pp-font-display: "Comfortaa", ui-rounded, sans-serif;
+  --pp-font-sans: "Inter", system-ui, sans-serif;
+
+  --pp-space-1: 4px;
+  --pp-space-2: 8px;
+  --pp-space-3: 12px;
+  --pp-space-4: 16px;
+  --pp-space-6: 24px;
+  --pp-space-8: 32px;
+  --pp-space-12: 48px;
+  --pp-space-16: 64px;
+
+  --pp-radius-control: 8px;
+  --pp-radius-card: 16px;
+  --pp-radius-marketing: 24px;
+  --pp-radius-pill: 999px;
+
+  --pp-shadow-card: 0 8px 24px rgba(36, 25, 20, 0.12);
+}
+
+@theme inline {
+  --color-pp-ink: var(--pp-ink);
+  --color-pp-bark: var(--pp-bark);
+  --color-pp-cocoa: var(--pp-cocoa);
+  --color-pp-caramel: var(--pp-caramel);
+  --color-pp-peach: var(--pp-peach);
+  --color-pp-cream: var(--pp-cream);
+  --color-pp-sand: var(--pp-sand);
+  --color-pp-mist: var(--pp-mist);
+  --color-pp-stone: var(--pp-stone);
+  --color-pp-teal: var(--pp-teal);
+  --color-pp-teal-dark: var(--pp-teal-dark);
+  --color-pp-blue: var(--pp-blue);
+  --color-pp-coral: var(--pp-coral);
+  --color-pp-white: var(--pp-white);
+
+  --font-sans: var(--font-postpooch-sans), "Inter", system-ui, sans-serif;
+  --font-display: var(--font-postpooch-display), "Comfortaa", ui-rounded,
+    sans-serif;
+
+  --radius-control: var(--pp-radius-control);
+  --radius-card: var(--pp-radius-card);
+  --radius-marketing: var(--pp-radius-marketing);
+  --radius-pill: var(--pp-radius-pill);
+
+  --shadow-card: var(--pp-shadow-card);
+  --shadow-card-lg: 0 16px 40px rgba(36, 25, 20, 0.14);
+  --shadow-card-sm: 0 4px 12px rgba(36, 25, 20, 0.1);
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes pp-map-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pp-mascot-jump {
+  /* Quiet rest for most of the cycle */
+  0%,
+  62%,
+  100% {
+    transform: translateY(0) scale(1, 1);
+  }
+  /* Wind-up squash */
+  68% {
+    transform: translateY(2px) scale(1.1, 0.88);
+  }
+  /* Excited leap */
+  74% {
+    transform: translateY(-28px) scale(0.92, 1.08);
+  }
+  /* Soft land */
+  80% {
+    transform: translateY(0) scale(1.08, 0.9);
+  }
+  /* Second little hop */
+  86% {
+    transform: translateY(-14px) scale(0.95, 1.05);
+  }
+  91% {
+    transform: translateY(0) scale(1.05, 0.94);
+  }
+  /* Tiny celebratory bounce */
+  95% {
+    transform: translateY(-6px) scale(0.98, 1.02);
+  }
+  98% {
+    transform: translateY(0) scale(1, 1);
+  }
+}
+
+.animate-pp-mascot-jump {
+  animation: pp-mascot-jump 4.5s cubic-bezier(0.34, 1.3, 0.64, 1) infinite;
+  transform-origin: center bottom;
+}
+
+.animate-float {
+  animation: float 7s ease-in-out infinite;
+}
+
+.animate-float-slow {
+  animation: float 9s ease-in-out 1.2s infinite;
+}
+
+.animate-pp-map-in {
+  animation: pp-map-in 0.45s ease-out both;
+}
+
+@keyframes pp-menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-pp-menu-in {
+  animation: pp-menu-in 0.18s ease-out both;
+}
+
+@keyframes pp-dialog-overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes pp-dialog-overlay-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes pp-dialog-in {
+  from { opacity: 0; scale: 0.97; }
+  to { opacity: 1; scale: 1; }
+}
+
+@keyframes pp-dialog-out {
+  from { opacity: 1; scale: 1; }
+  to { opacity: 0; scale: 0.98; }
+}
+
+@keyframes pp-template-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.pp-template-card {
+  animation: pp-template-in 0.4s ease-out both;
+}
+
+/* Quiet scrollbar for the week schedule grid */
+.pp-schedule-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--pp-sand) transparent;
+}
+
+.pp-schedule-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+
+.pp-schedule-scroll::-webkit-scrollbar-thumb {
+  background: var(--pp-sand);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+.pp-schedule-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Fabric editor controls: quiet, tactile, and native-feeling. */
+.pp-editor-stage {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(116, 108, 103, 0.45) transparent;
+}
+
+.pp-editor-stage::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.pp-editor-stage::-webkit-scrollbar-thumb {
+  background: rgba(116, 108, 103, 0.38);
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background-clip: content-box;
+}
+
+.pp-range {
+  height: 4px;
+  cursor: pointer;
+  appearance: none;
+  border-radius: 999px;
+  background: var(--pp-sand);
+  accent-color: var(--pp-teal);
+}
+
+.pp-range::-webkit-slider-thumb {
+  width: 16px;
+  height: 16px;
+  appearance: none;
+  border: 2px solid var(--pp-white);
+  border-radius: 50%;
+  background: var(--pp-teal);
+  box-shadow: 0 1px 4px rgba(36, 25, 20, 0.24);
+}
+
+.pp-range::-moz-range-thumb {
+  width: 13px;
+  height: 13px;
+  border: 2px solid var(--pp-white);
+  border-radius: 50%;
+  background: var(--pp-teal);
+  box-shadow: 0 1px 4px rgba(36, 25, 20, 0.24);
+}
+
+@keyframes pp-google-surface-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.pp-google-surface {
+  animation: pp-google-surface-in 0.34s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+body {
+  background: var(--pp-cream);
+  color: var(--pp-ink);
+  font-family: var(--font-postpooch-sans), "Inter", system-ui, sans-serif;
+}
+
+/*
+ * Templatical email editor — moderate PostPooch chrome theme.
+ * --tpl-user-* inherits across the editor's Shadow DOM (docs.templatical.com/guide/theming).
+ */
+.pp-templatical-host {
+  --tpl-user-bg: var(--pp-white);
+  --tpl-user-bg-elevated: var(--pp-white);
+  --tpl-user-bg-hover: var(--pp-mist);
+  --tpl-user-bg-active: color-mix(in srgb, var(--pp-sand) 55%, white);
+  --tpl-user-border: var(--pp-sand);
+  --tpl-user-border-light: color-mix(in srgb, var(--pp-sand) 70%, white);
+  --tpl-user-text: var(--pp-ink);
+  --tpl-user-text-muted: var(--pp-stone);
+  --tpl-user-text-dim: color-mix(in srgb, var(--pp-stone) 70%, white);
+  --tpl-user-primary: var(--pp-teal);
+  --tpl-user-primary-hover: var(--pp-teal-dark);
+  --tpl-user-primary-light: color-mix(in srgb, var(--pp-teal) 14%, white);
+  --tpl-user-secondary: var(--pp-cocoa);
+  --tpl-user-secondary-hover: var(--pp-bark);
+  --tpl-user-secondary-light: color-mix(in srgb, var(--pp-caramel) 22%, white);
+  --tpl-user-success: #2f6f55;
+  --tpl-user-success-light: color-mix(in srgb, #2f6f55 14%, white);
+  --tpl-user-warning: var(--pp-caramel);
+  --tpl-user-warning-light: color-mix(in srgb, var(--pp-peach) 45%, white);
+  --tpl-user-danger: var(--pp-coral);
+  --tpl-user-danger-light: color-mix(in srgb, var(--pp-coral) 14%, white);
+  --tpl-user-canvas-bg: #ebe6e1;
+  --tpl-user-radius: 10px;
+  --tpl-user-radius-sm: 8px;
+  --tpl-user-radius-lg: 14px;
+  --tpl-user-font-family: var(--font-postpooch-sans), "Inter", system-ui,
+    sans-serif;
+  --tpl-user-shadow-sm: 0 2px 8px rgba(36, 25, 20, 0.06);
+  --tpl-user-shadow: 0 4px 12px rgba(36, 25, 20, 0.1);
+  --tpl-user-shadow-md: 0 8px 24px rgba(36, 25, 20, 0.12);
+  --tpl-user-shadow-lg: 0 16px 40px rgba(36, 25, 20, 0.14);
+  --tpl-user-shadow-xl: 0 24px 56px rgba(36, 25, 20, 0.16);
+  --tpl-user-overlay: color-mix(in srgb, var(--pp-ink) 40%, transparent);
+  --tpl-user-ring: color-mix(in srgb, var(--pp-teal) 35%, transparent);
+}
+
+/* Twenty-inspired CRM workspace — scoped so the rest of the product stays on brand */
+.crm-shell {
+  --crm-bg: #ffffff;
+  --crm-sidebar: #fafafa;
+  --crm-border: #ececec;
+  --crm-text: #141414;
+  --crm-secondary: #616161;
+  --crm-muted: #999999;
+  --crm-hover: #f5f5f5;
+  --crm-active: #efefef;
+  --crm-accent: var(--pp-teal);
+  --crm-accent-hover: var(--pp-teal-dark);
+  --crm-danger: #d32f2f;
+  --crm-success: #2e7d32;
+  background: var(--crm-bg);
+  color: var(--crm-text);
+  font-family: var(--font-postpooch-sans), "Inter", system-ui, sans-serif;
+}
+
+.crm-shell ::selection {
+  background: color-mix(in srgb, var(--pp-teal) 22%, white);
+  color: var(--crm-text);
+}
+
+.crm-shell {
+  scrollbar-width: thin;
+  scrollbar-color: #d9d9d9 transparent;
+}
+
+.crm-shell::-webkit-scrollbar,
+.crm-shell *::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.crm-shell::-webkit-scrollbar-thumb,
+.crm-shell *::-webkit-scrollbar-thumb {
+  background: #d4d4d4;
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background-clip: content-box;
+}
+
+.crm-shell::-webkit-scrollbar-track,
+.crm-shell *::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::selection {
+  background: var(--pp-peach);
+  color: var(--pp-ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .animate-pp-map-in,
+  .animate-pp-mascot-jump,
+  .animate-pp-menu-in,
+  .animate-float,
+  .animate-float-slow,
+  .pp-template-card {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}

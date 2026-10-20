@@ -1,0 +1,343 @@
+/* Home-page style — same cream / teal / sand language as dashboard website */
+@import "performative-ui/styles.css";
+
+.pp-landing {
+  --pp-ease: cubic-bezier(0.25, 0.1, 0.25, 1);
+
+  /* Anthropic type system — editorial voice (scoped to landing).
+     Self-hosted Source Serif 4 first (via next/font), then system
+     fallbacks so text never breaks offline or on other systems. */
+  --font-anthropic-serif: var(--font-source-serif), Georgia,
+    "Source Serif Pro", Charter, "Times New Roman", serif;
+  --font-anthropic-sans: var(--font-postpooch-sans), "Inter", system-ui, Arial,
+    sans-serif;
+  --font-anthropic-mono: "JetBrains Mono", "SF Mono", Menlo, monospace;
+
+  /* Type scale tokens */
+  --text-caption: 12px; /* lh 1.4, ls -0.24px */
+  --text-body-sm: 16px; /* lh 1, ls -0.08px */
+  --text-body: 20px; /* lh 1.4 */
+  --text-subheading: 24px; /* lh 1.3, ls -0.05px */
+  --text-heading: 61px; /* lh 1.1, ls -0.12px */
+  --text-display: 68px; /* lh 1.1 */
+
+  /* performative-ui tokens → Postpooch light brand palette */
+  --pui-bg: var(--pp-cream);
+  --pui-bg-elev: var(--pp-white);
+  --pui-bg-soft: var(--pp-mist);
+  --pui-border: color-mix(in srgb, var(--pp-sand) 85%, white);
+  --pui-border-bright: var(--pp-sand);
+  --pui-fg: var(--pp-ink);
+  --pui-fg-dim: var(--pp-stone);
+  --pui-fg-mute: color-mix(in srgb, var(--pp-stone) 72%, white);
+  --pui-grad-from: var(--pp-teal);
+  --pui-grad-mid: var(--pp-caramel);
+  --pui-grad-to: var(--pp-peach);
+  --pui-grad: linear-gradient(
+    120deg,
+    var(--pui-grad-from),
+    var(--pui-grad-mid),
+    var(--pui-grad-to)
+  );
+  --pui-success: #2f6f55;
+  --pui-danger: var(--pp-coral);
+  --pui-warn: var(--pp-caramel);
+  --pui-glow: 0 0 24px color-mix(in srgb, var(--pp-teal) 22%, transparent);
+  --pui-glow-strong:
+    0 0 40px color-mix(in srgb, var(--pp-teal) 28%, transparent),
+    0 0 80px color-mix(in srgb, var(--pp-peach) 18%, transparent);
+  --pui-font-sans: var(--font-postpooch-sans), "Inter", system-ui, sans-serif;
+  --pui-font-serif: var(--font-postpooch-display), "Comfortaa", ui-rounded,
+    sans-serif;
+  --pui-radius-sm: var(--pp-radius-control);
+  --pui-radius: 12px;
+  --pui-radius-lg: var(--pp-radius-card);
+  --pui-radius-xl: var(--pp-radius-marketing);
+  --pui-ease: var(--pp-ease);
+  --pui-glass: color-mix(in srgb, var(--pp-white) 88%, transparent);
+  --pui-glass-deep: color-mix(in srgb, var(--pp-white) 92%, transparent);
+  --pui-glass-soft: color-mix(in srgb, var(--pp-white) 70%, transparent);
+  --pui-overlay: color-mix(in srgb, var(--pp-ink) 4%, transparent);
+  --pui-overlay-strong: color-mix(in srgb, var(--pp-ink) 6%, transparent);
+  --pui-overlay-bright: color-mix(in srgb, var(--pp-ink) 10%, transparent);
+  --pui-button-dark-fill: linear-gradient(
+    180deg,
+    var(--pp-white),
+    var(--pp-mist)
+  );
+  --pui-button-dark-popover-fill: linear-gradient(
+    180deg,
+    var(--pp-white),
+    var(--pp-cream)
+  );
+  --pui-button-dark-border: color-mix(in srgb, var(--pp-sand) 90%, var(--pp-ink));
+  --pui-shimmer-sweep: color-mix(in srgb, var(--pp-ink) 18%, transparent);
+  --pui-shimmer-sweep-edge: color-mix(in srgb, var(--pp-ink) 5%, transparent);
+  --pui-wave-text: var(--pp-teal-dark);
+  --pui-wave-text-hover: var(--pp-teal);
+  --pui-wave-border: color-mix(in srgb, var(--pp-teal) 28%, var(--pp-sand));
+  --pui-wave-border-hover: color-mix(in srgb, var(--pp-teal) 42%, var(--pp-sand));
+  --pui-bubble-user-fill: linear-gradient(
+    135deg,
+    var(--pp-mist),
+    var(--pp-cream)
+  );
+  --pui-ascii-panel-fill: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--pp-mist) 70%, transparent),
+    color-mix(in srgb, var(--pp-white) 50%, transparent)
+  );
+  --pui-shadow-card: 0 10px 30px rgba(36, 25, 20, 0.08);
+  --pui-shadow-deep: 0 20px 50px rgba(36, 25, 20, 0.1);
+  --pui-shadow-fab: 0 10px 30px rgba(36, 25, 20, 0.12);
+  --pui-grid-dot: color-mix(in srgb, var(--pp-ink) 4.5%, transparent);
+  --pui-logo-filter: none;
+  --pui-logo-filter-hover: none;
+  --pui-logo-text: color-mix(in srgb, var(--pp-ink) 55%, transparent);
+  --pui-logo-text-strong: color-mix(in srgb, var(--pp-ink) 78%, transparent);
+  --pui-temp-violet: var(--pp-teal);
+  --pui-temp-ripple-dark: color-mix(in srgb, var(--pp-teal) 14%, transparent);
+  --pui-temp-ripple-bright: color-mix(in srgb, var(--pp-teal) 85%, transparent);
+  --pui-temp-ripple-from: 37, 111, 104;
+  --pui-temp-ripple-to: 201, 130, 79;
+
+  background: var(--pp-cream);
+  color: var(--pp-ink);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.pp-landing ::selection {
+  background: var(--pp-peach);
+  color: var(--pp-ink);
+}
+
+/* Retarget hardcoded purple accents from performative-ui to brand teal */
+.pp-landing .pui-prompt,
+.pp-landing .pui-promptbox {
+  box-shadow:
+    var(--pui-shadow-card),
+    0 0 0 1px color-mix(in srgb, var(--pp-teal) 18%, transparent),
+    0 0 28px color-mix(in srgb, var(--pp-teal) 14%, transparent);
+}
+
+.pp-landing .pui-bubble--ai {
+  border-color: color-mix(in srgb, var(--pp-teal) 35%, transparent);
+  box-shadow: 0 0 28px color-mix(in srgb, var(--pp-teal) 14%, transparent);
+}
+
+.pp-landing .pui-price--featured {
+  border-color: color-mix(in srgb, var(--pp-teal) 55%, transparent);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--pp-teal) 8%, white),
+    var(--pui-bg-elev)
+  );
+  box-shadow: 0 0 60px color-mix(in srgb, var(--pp-teal) 16%, transparent);
+}
+
+.pp-landing .pui-ba__panel--after {
+  border-color: color-mix(in srgb, var(--pp-teal) 45%, transparent);
+  box-shadow: 0 0 48px color-mix(in srgb, var(--pp-teal) 14%, transparent);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--pp-teal) 6%, white),
+    var(--pui-bg-elev)
+  );
+}
+
+.pp-landing .pui-glass-card__icon {
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--pp-teal) 22%, white),
+    color-mix(in srgb, var(--pp-peach) 28%, white)
+  );
+  border-color: color-mix(in srgb, var(--pp-sand) 80%, white);
+  color: var(--pp-teal-dark);
+}
+
+.pp-landing .pui-sparkle-field__item {
+  color: color-mix(in srgb, var(--pp-caramel) 70%, white);
+  text-shadow: 0 0 10px color-mix(in srgb, var(--pp-peach) 45%, transparent);
+}
+
+.pp-landing .pui-community:hover {
+  border-color: color-mix(in srgb, var(--pp-teal) 40%, transparent);
+}
+
+.pp-landing .pui-marquee__text {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--pp-stone);
+}
+
+.pp-landing .pui-ba__panel--before {
+  opacity: 0.7;
+  filter: grayscale(20%);
+}
+
+.pp-landing .pui-ba__panel--before li {
+  text-decoration-color: color-mix(in srgb, var(--pp-ink) 25%, transparent);
+}
+
+.pp-landing .pui-stat {
+  color: var(--pp-ink);
+}
+
+.pp-landing .pui-eyebrow {
+  border-color: color-mix(in srgb, var(--pp-sand) 90%, var(--pp-teal));
+  background: color-mix(in srgb, var(--pp-white) 80%, transparent);
+  color: var(--pp-teal-dark);
+  font-family: var(--font-anthropic-sans);
+  font-size: var(--text-caption); /* 12px badge */
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: -0.02em; /* tight nav/caption tracking */
+}
+
+/* ——— Hero card text redesign (Anthropic editorial voice, text-only) ——— */
+
+/* Badge / eyebrow inside the hero card: Sans UI chrome, caption token */
+.pp-hero-eyebrow {
+  font-family: var(--font-anthropic-sans);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: -0.02em;
+}
+
+/* Display heading: Anthropic Serif, 68px desktop, weight 400, lh 1.10 */
+.pp-hero-display {
+  font-family: var(--font-anthropic-serif);
+  font-size: 40px;
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: normal;
+}
+
+@media (min-width: 640px) {
+  .pp-hero-display {
+    font-size: 56px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .pp-hero-display {
+    font-size: var(--text-display); /* 68px */
+  }
+}
+
+/* Body copy: Anthropic Serif, 20px, weight 400, lh 1.40 */
+.pp-hero-body {
+  font-family: var(--font-anthropic-serif);
+  font-size: var(--text-body); /* 20px */
+  font-weight: 400;
+  line-height: 1.4;
+  letter-spacing: normal;
+}
+
+/* Buttons / UI chrome: Anthropic Sans */
+.pp-hero-button {
+  font-family: var(--font-anthropic-sans);
+  font-size: 15px;
+  line-height: 1.3;
+  letter-spacing: -0.005em;
+}
+
+.pp-hero-button--primary {
+  font-weight: 600;
+}
+
+.pp-hero-button--secondary {
+  font-weight: 500;
+}
+
+/* Trial note inside the pill + mobile caption: Sans UI chrome */
+.pp-hero-trial {
+  font-family: var(--font-anthropic-sans);
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: -0.005em;
+}
+
+.pp-hero-caption {
+  font-family: var(--font-anthropic-sans);
+  font-size: var(--text-caption); /* 12px */
+  font-weight: 400;
+  line-height: 1.4;
+  letter-spacing: -0.02em;
+}
+
+/* Floating mini-cards over the mascot: serif card titles + supporting lines */
+.pp-hero-card-title {
+  font-family: var(--font-anthropic-serif);
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: normal;
+}
+
+.pp-hero-card-sub {
+  font-family: var(--font-anthropic-serif);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.43;
+  letter-spacing: normal;
+}
+
+@keyframes pp-apple-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+  50% {
+    transform: scale(1.04);
+    opacity: 0.75;
+  }
+}
+
+.pp-apple-glow {
+  animation: pp-apple-breathe 8s var(--pp-ease) infinite;
+}
+
+@keyframes pp-apple-rise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.pp-apple-rise {
+  animation: pp-apple-rise 0.7s var(--pp-ease) both;
+}
+
+.pp-apple-rise-delay-1 {
+  animation-delay: 0.08s;
+}
+
+.pp-apple-rise-delay-2 {
+  animation-delay: 0.16s;
+}
+
+.pp-apple-rise-delay-3 {
+  animation-delay: 0.24s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pp-apple-glow,
+  .pp-apple-rise,
+  .pp-apple-rise-delay-1,
+  .pp-apple-rise-delay-2,
+  .pp-apple-rise-delay-3 {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
